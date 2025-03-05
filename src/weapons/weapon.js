@@ -12,6 +12,7 @@ import {
 } from './wand.js';
 import { cubes } from '../entities/enemies.js';
 import { createDestroyEffect, activeFragments } from '../effects/particles.js';
+import { createMagicEffect } from '../effects/particles.js';
 import { createEnergySlice } from '../effects/animations.js';
 
 // Weapon state variables
@@ -270,7 +271,16 @@ function updateWeaponAnimations() {
                     
                     // Create magic effect (during the main swing phase)
                     if (swingProgress > 0.4 && swingProgress < 0.6 && Math.random() > 0.7) {
-                        // createMagicEffect(); Implement this in particles.js
+                        // Get wand tip position
+                        const wandTip = new THREE.Vector3();
+                        wand.children[5].getWorldPosition(wandTip);
+                        
+                        // Get direction from camera
+                        const direction = new THREE.Vector3();
+                        camera.getWorldDirection(direction);
+                        
+                        // Create the magic effect
+                        createMagicEffect(wandTip, direction);
                     }
                     
                     // Crystal pulses in the main phase
@@ -380,6 +390,7 @@ function updateWeaponSpecials(controls) {
             isWandSpecialActive = false;
             wandSpecialCooldown = wandSpecialMaxCooldown;
             removeArkanorb(arkanorb);
+            arkanorb = null;
         }
     }
 }

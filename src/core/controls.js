@@ -1,5 +1,6 @@
 // Player movement and controls
 import { scene } from './scene.js';
+import { createDashEffect } from '../effects/particles.js';
 
 // Control variables
 let controls;
@@ -185,6 +186,11 @@ function updateDash(camera) {
         // Apply dash movement
         camera.position.x += dashX * dashSpeed;
         camera.position.z += dashZ * dashSpeed;
+        
+        // Create dash effect (moved to animation loop for consistency)
+        if (dashDuration % 2 === 0) {
+            createDashEffect(camera.position);
+        }
         
         // Decrease dash duration
         dashDuration--;

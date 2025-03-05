@@ -92,8 +92,8 @@ function updateKatanaSpecialAnimation(specialProgress, katana, controls) {
         // Calculate the rotation angle (0 to 2*PI for a complete rotation)
         const rotationAngle = phaseProgress * Math.PI * 2;
         
-        // Rotate the camera accordingly (corrected API)
-        controls.object.rotation.y = rotationAngle;
+        // Fixed: Rotate the camera directly instead of using controls.object
+        camera.rotation.y = rotationAngle;
         
         // The katana follows the camera automatically since it's attached to it
         

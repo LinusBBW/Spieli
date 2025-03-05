@@ -16,6 +16,7 @@ import {
 import { updateFeet } from '../entities/player.js';
 import { updateCubes } from '../entities/enemies.js';
 import { updateParticles } from '../effects/particles.js';
+import { createDashEffect } from '../effects/particles.js';
 
 // Store animation frame ID for potential cancellation
 let animationFrameId;
@@ -36,6 +37,11 @@ function animate() {
     // Update dash, jumps, etc.
     const isDashActive = updateDash(camera);
     const isJumpActive = updateJump(camera);
+    
+    // Create dash effect if dashing
+    if (isDashActive) {
+        createDashEffect(camera.position);
+    }
     
     // Update weapon animations
     updateWeaponAnimations();

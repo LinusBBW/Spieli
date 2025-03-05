@@ -1,7 +1,7 @@
 // Wand weapon implementation
 
 import { scene, camera } from '../core/scene.js';
-import { createMagicEffect } from '../effects/particles.js';
+import { createMagicEffect, createDestroyEffect, createDashEffect } from '../effects/particles.js';
 import { cubes } from '../entities/enemies.js';
 
 // Create a cool magic wand
@@ -282,8 +282,44 @@ function updateArkanorbAnimation(arkanorb, camera) {
     
     // Particle effects
     if (Math.random() > 0.9) {
-        // Create particles around the orb
-        // ... (particle effect code)
+        // Create a particle effect for the orb
+        const particle = new THREE.Mesh(
+            new THREE.SphereGeometry(0.05, 8, 8),
+            new THREE.MeshBasicMaterial({ 
+                color: new THREE.Color().setHSL(hue, 0.9, 0.7), 
+                transparent: true, 
+                opacity: 0.7 
+            })
+        );
+        
+        // Position around the orb
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 0.4 + Math.random() * 0.2;
+        particle.position.set(
+            arkanorb.position.x + Math.cos(angle) * radius,
+            arkanorb.position.y + (Math.random() - 0.5) * 0.4,
+            arkanorb.position.z + Math.sin(angle) * radius
+        );
+        
+        // Add to scene with proper tracking
+        const particleGroup = new THREE.Group();
+        particleGroup.add(particle);
+        
+        // Velocity and lifetime
+        particle.userData.velocity = new THREE.Vector3(
+            (Math.random() - 0.5) * 0.02,
+            (Math.random() - 0.5) * 0.02,
+            (Math.random() - 0.5) * 0.02
+        );
+        particle.userData.lifeTime = 0.5;
+        particle.userData.createTime = Date.now();
+        
+        scene.add(particleGroup);
+        
+        // Use activeFragments to track particle effects
+        if (typeof activeFragments !== 'undefined') {
+            activeFragments.push(particleGroup);
+        }
     }
 }
 
