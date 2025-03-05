@@ -4,6 +4,8 @@ import { dashCooldown, dashMaxCooldown } from '../core/controls.js';
 import { 
     specialCooldown, 
     specialMaxCooldown,
+    swordSpecialCooldown,
+    swordSpecialMaxCooldown,
     isWandSpecialActive,
     wandSpecialDuration,
     wandSpecialMaxDuration,
@@ -36,6 +38,33 @@ function createDashIndicator() {
     
     dashIndicator.appendChild(dashFill);
     document.body.appendChild(dashIndicator);
+}
+
+// UI display for sword special move cooldown
+function createSwordSpecialIndicator() {
+    // Create a div element for the sword special indicator
+    const swordSpecialIndicator = document.createElement('div');
+    swordSpecialIndicator.id = 'swordSpecialIndicator';
+    swordSpecialIndicator.style.position = 'absolute';
+    swordSpecialIndicator.style.bottom = '80px';
+    swordSpecialIndicator.style.left = '20px';
+    swordSpecialIndicator.style.width = '100px';
+    swordSpecialIndicator.style.height = '10px';
+    swordSpecialIndicator.style.backgroundColor = '#333';
+    swordSpecialIndicator.style.border = '2px solid #fff';
+    swordSpecialIndicator.style.borderRadius = '5px';
+    swordSpecialIndicator.style.overflow = 'hidden';
+    
+    // Inner div for the fill level
+    const swordSpecialFill = document.createElement('div');
+    swordSpecialFill.id = 'swordSpecialFill';
+    swordSpecialFill.style.width = '100%';
+    swordSpecialFill.style.height = '100%';
+    swordSpecialFill.style.backgroundColor = '#FFA500'; // Orange
+    swordSpecialFill.style.transition = 'width 0.1s';
+    
+    swordSpecialIndicator.appendChild(swordSpecialFill);
+    document.body.appendChild(swordSpecialIndicator);
 }
 
 // UI display for katana special move cooldown
@@ -105,6 +134,19 @@ function updateDashIndicator() {
     }
 }
 
+// Update the sword special move indicator
+function updateSwordSpecialIndicator() {
+    const swordSpecialFill = document.getElementById('swordSpecialFill');
+    if (swordSpecialFill) {
+        if (swordSpecialCooldown > 0) {
+            const fillPercentage = 100 - (swordSpecialCooldown / swordSpecialMaxCooldown) * 100;
+            swordSpecialFill.style.width = fillPercentage + '%';
+        } else {
+            swordSpecialFill.style.width = '100%';
+        }
+    }
+}
+
 // Update the special move indicator
 function updateSpecialIndicator() {
     const specialFill = document.getElementById('specialFill');
@@ -140,9 +182,11 @@ function updateWandSpecialIndicator() {
 // Export indicator functions
 export {
     createDashIndicator,
+    createSwordSpecialIndicator,
     createSpecialIndicator,
     createWandSpecialIndicator,
     updateDashIndicator,
+    updateSwordSpecialIndicator,
     updateSpecialIndicator,
     updateWandSpecialIndicator
 };

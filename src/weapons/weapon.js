@@ -1,7 +1,7 @@
 // Weapon system management
 
 import { scene, camera, raycaster, mouse } from '../core/scene.js';
-import { createSword } from './sword.js';
+import { createSword, updateSwordSpecialAnimation } from './sword.js';
 import { createKatana, updateKatanaSpecialAnimation } from './katana.js';
 import { 
     createWand,
@@ -13,7 +13,7 @@ import {
 import { cubes } from '../entities/enemies.js';
 import { createDestroyEffect, activeFragments } from '../effects/particles.js';
 import { createMagicEffect } from '../effects/particles.js';
-import { createEnergySlice } from '../effects/animations.js';
+import { createEnergySlice, createScreenShake } from '../effects/animations.js';
 
 // Weapon state variables
 let activeWeapon = "sword"; // "sword", "katana", or "wand"
@@ -31,12 +31,20 @@ let originalSwordRotation = {
     z: -Math.PI / 8
 };
 
-// Special move variables - Katana
+// Special move variables - General
 let isPerformingSpecial = false;
 let specialProgress = 0;
 let specialCooldown = 0;
 let specialMaxCooldown = 180; // 3 seconds at 60 FPS
 let originalCameraRotation = 0;
+
+// Special move variables - Sword
+let isSwordSpecialActive = false;
+let swordSpecialCooldown = 0;
+let swordSpecialMaxCooldown = 240; // 4 seconds at 60 FPS
+
+// Special move variables - Katana
+// (keeping existing variables)
 
 // Special move variables - Wand
 let isWandSpecialActive = false;
@@ -121,7 +129,10 @@ function cycleWeapon() {
 
 // Activate special move for the current weapon
 function activateSpecialMove(controls) {
-    if (activeWeapon === "katana" && !isPerformingSpecial && specialCooldown <= 0) {
+    if (activeWeapon === "sword" && !isPerformingSpecial && swordSpecialCooldown <= 0) {
+        startSwordSpecial(controls);
+        console.log("Sword special move activated");
+    } else if (activeWeapon === "katana" && !isPerformingSpecial && specialCooldown <= 0) {
         startKatanaSpecial(controls);
         console.log("Katana special move activated");
     } else if (activeWeapon === "wand" && !isWandSpecialActive && wandSpecialCooldown <= 0) {
@@ -177,12 +188,31 @@ function checkCubeHits() {
     }
 }
 
+// Start the sword special move
+function startSwordSpecial(controls) {
+    isPerformingSpecial = true;
+    specialProgress = 0;
+    isSwordSpecialActive = true;
+    
+    // Save original camera rotation
+    originalCameraRotation = camera.rotation.y;
+    
+    // Temporarily disable controls (for first half of animation)
+    controls.enabled = false;
+    
+    // Apply screen shake for impact effect
+    setTimeout(() => {
+        createScreenShake(0.1, 0.85);
+        controls.enabled = true;
+    }, 800); // Timing for when sword hits ground
+}
+
 // Start the katana special move
 function startKatanaSpecial(controls) {
     isPerformingSpecial = true;
     specialProgress = 0;
     
-    // Speichere die ursprüngliche Kamera-Rotation
+    // Save original camera rotation
     originalCameraRotation = camera.rotation.y;
     
     // Temporarily disable controls
@@ -351,32 +381,53 @@ function updateWeaponAnimations() {
 
 // Update special move effects and cooldowns
 function updateWeaponSpecials(controls) {
-    // Update katana special move cooldown
+    // Update special move cooldowns
     if (specialCooldown > 0) {
         specialCooldown--;
     }
     
-    // Update wand special move cooldown
+    if (swordSpecialCooldown > 0) {
+        swordSpecialCooldown--;
+    }
+    
     if (wandSpecialCooldown > 0) {
         wandSpecialCooldown--;
     }
     
-    // Katana special move animation
+    // Special move animations based on active weapon
     if (isPerformingSpecial) {
         // Update the special progress
-        specialProgress += 0.02;
+        specialProgress += 0.01; // Slower speed for better effects
         
         if (specialProgress <= 1) {
-            // Übergebe originalCameraRotation als zusätzlichen Parameter
-            updateKatanaSpecialAnimation(specialProgress, katana, controls, originalCameraRotation);
+            if (isSwordSpecialActive) {
+                // Sword special animation
+                updateSwordSpecialAnimation(specialProgress, sword, controls, originalCameraRotation);
+            } else {
+                // Katana special animation
+                updateKatanaSpecialAnimation(specialProgress, katana, controls, originalCameraRotation);
+            }
         } else {
             // End special move
             isPerformingSpecial = false;
-            specialCooldown = specialMaxCooldown;
             
-            // Reset katana color and size
-            katana.children[2].material.color.setRGB(0.75, 0.75, 0.75); // Silver
-            katana.children[2].scale.set(1, 1, 1); // Original size
+            if (isSwordSpecialActive) {
+                swordSpecialCooldown = swordSpecialMaxCooldown;
+                isSwordSpecialActive = false;
+                
+                // Reset sword
+                sword.position.set(0.3, -0.2, -0.5);
+                sword.rotation.x = Math.PI / 6;
+                sword.rotation.z = -Math.PI / 8;
+                sword.children[2].material.color.setRGB(0.75, 0.75, 0.75); // Reset blade color
+                sword.children[2].scale.set(1, 1, 1); // Reset blade scale
+            } else {
+                specialCooldown = specialMaxCooldown;
+                
+                // Reset katana
+                katana.children[2].material.color.setRGB(0.75, 0.75, 0.75); // Silver
+                katana.children[2].scale.set(1, 1, 1); // Original size
+            }
         }
     }
     
@@ -426,5 +477,8 @@ export {
     wandSpecialDuration,
     wandSpecialMaxDuration,
     wandSpecialCooldown,
-    wandSpecialMaxCooldown
-};
+    wandSpecialMaxCooldown,
+    isSwordSpecialActive,
+    swordSpecialCooldown,
+    swordSpecialMaxCooldown
+}

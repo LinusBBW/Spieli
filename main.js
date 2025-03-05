@@ -15,7 +15,12 @@ import { initWeapons } from './src/weapons/weapon.js';
 
 // Import UI modules
 import { createHealthSystem } from './src/ui/health.js';
-import { createDashIndicator, createSpecialIndicator, createWandSpecialIndicator } from './src/ui/indicators.js';
+import { 
+    createDashIndicator, 
+    createSpecialIndicator, 
+    createWandSpecialIndicator,
+    createSwordSpecialIndicator
+} from './src/ui/indicators.js';
 import { createCrosshair } from './src/ui/crosshair.js';
 
 // Initialize the game
@@ -40,6 +45,7 @@ function initGame() {
     createCrosshair(camera);
     createHealthSystem();
     createDashIndicator();
+    createSwordSpecialIndicator();
     createSpecialIndicator();
     createWandSpecialIndicator();
     

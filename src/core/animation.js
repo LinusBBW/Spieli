@@ -8,7 +8,12 @@ import {
     controls
 } from './controls.js';
 import { updateHealthSystem } from '../ui/health.js';
-import { updateDashIndicator, updateSpecialIndicator, updateWandSpecialIndicator } from '../ui/indicators.js';
+import { 
+    updateDashIndicator, 
+    updateSpecialIndicator, 
+    updateWandSpecialIndicator,
+    updateSwordSpecialIndicator
+} from '../ui/indicators.js';
 import { 
     updateWeaponAnimations, 
     updateWeaponSpecials
@@ -63,6 +68,7 @@ function animate() {
     
     // Update UI indicators
     updateDashIndicator();
+    updateSwordSpecialIndicator();
     updateSpecialIndicator();
     updateWandSpecialIndicator();
     
