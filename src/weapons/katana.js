@@ -51,7 +51,7 @@ function createKatana(camera) {
 }
 
 // Update katana special move animation
-function updateKatanaSpecialAnimation(specialProgress, katana, controls) {
+function updateKatanaSpecialAnimation(specialProgress, katana, controls, originalCameraRotation) {
     // Current camera position and direction
     const cameraPos = camera.position.clone();
     const cameraDirection = new THREE.Vector3();
@@ -90,7 +90,7 @@ function updateKatanaSpecialAnimation(specialProgress, katana, controls) {
         const phaseProgress = (specialProgress - 0.3) / 0.4;
         
         // Calculate the rotation angle (0 to 2*PI for a complete rotation)
-        const rotationAngle = phaseProgress * Math.PI * 2;
+        const rotationAngle = originalCameraRotation + phaseProgress * Math.PI * 2;
         
         // Fixed: Rotate the camera directly instead of using controls.object
         camera.rotation.y = rotationAngle;
@@ -162,6 +162,11 @@ function updateKatanaSpecialAnimation(specialProgress, katana, controls) {
         // Reset katana color
         katana.children[2].material.color.setRGB(0.75, 0.75, 0.75); // Silver
         katana.children[2].scale.set(1, 1, 1); // Original size
+        
+        // Stelle sicher, dass die Kamera zum Ende der Animation zur ursprünglichen Rotation zurückkehrt
+        if (phaseProgress > 0.9) {
+            camera.rotation.y = originalCameraRotation;
+        }
         
         // Optional: final crater
         if (phaseProgress < 0.1) {

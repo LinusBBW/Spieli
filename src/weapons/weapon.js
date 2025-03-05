@@ -36,6 +36,7 @@ let isPerformingSpecial = false;
 let specialProgress = 0;
 let specialCooldown = 0;
 let specialMaxCooldown = 180; // 3 seconds at 60 FPS
+let originalCameraRotation = 0;
 
 // Special move variables - Wand
 let isWandSpecialActive = false;
@@ -180,6 +181,9 @@ function checkCubeHits() {
 function startKatanaSpecial(controls) {
     isPerformingSpecial = true;
     specialProgress = 0;
+    
+    // Speichere die ursprüngliche Kamera-Rotation
+    originalCameraRotation = camera.rotation.y;
     
     // Temporarily disable controls
     controls.enabled = false;
@@ -363,7 +367,8 @@ function updateWeaponSpecials(controls) {
         specialProgress += 0.02;
         
         if (specialProgress <= 1) {
-            updateKatanaSpecialAnimation(specialProgress, katana, controls);
+            // Übergebe originalCameraRotation als zusätzlichen Parameter
+            updateKatanaSpecialAnimation(specialProgress, katana, controls, originalCameraRotation);
         } else {
             // End special move
             isPerformingSpecial = false;
