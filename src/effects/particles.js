@@ -176,30 +176,66 @@ function updateParticles() {
         const fragments = activeFragments[i];
         let allDead = true;
         
+        // Check for custom update method first
+        if (fragments.update && typeof fragments.update === 'function') {
+            // If the update method returns false, the animation is complete
+            if (!fragments.update(now)) {
+                scene.remove(fragments);
+                activeFragments.splice(i, 1);
+            } else {
+                allDead = false;
+            }
+            continue; // Skip standard animation if using custom update
+        }
+        
+        // Standard animation logic for fragments without custom update
         // Animate each fragment
         for (let j = 0; j < fragments.children.length; j++) {
             const fragment = fragments.children[j];
+            
+            // Ensure userData exists
+            if (!fragment.userData) {
+                fragment.userData = {};
+            }
+            
+            // Ensure velocity exists
+            if (!fragment.userData.velocity) {
+                fragment.userData.velocity = new THREE.Vector3(0, 0, 0);
+            }
             
             // Move the fragment according to its velocity
             fragment.position.x += fragment.userData.velocity.x;
             fragment.position.y += fragment.userData.velocity.y;
             fragment.position.z += fragment.userData.velocity.z;
             
-            // Simulate gravity
-            fragment.userData.velocity.y -= 0.002;
+            // Simulate gravity (only if this fragment is affected by gravity)
+            if (fragment.userData.affectedByGravity !== false) {
+                fragment.userData.velocity.y -= 0.002;
+            }
             
-            // Rotate the fragment
-            fragment.rotation.x += 0.02;
-            fragment.rotation.y += 0.03;
+            // Only rotate if rotation should be applied
+            if (fragment.userData.noRotation !== true) {
+                fragment.rotation.x += 0.02;
+                fragment.rotation.y += 0.03;
+            }
             
             // Check if the fragment is still alive
-            const age = (now - fragment.userData.createTime) / 1000;
-            if (age < fragment.userData.lifeTime) {
+            const age = (now - (fragment.userData.createTime || now)) / 1000;
+            const lifeTime = fragment.userData.lifeTime || 2; // Default lifetime
+            
+            if (age < lifeTime) {
                 allDead = false;
                 
-                // Shrink the fragment over time
-                const scale = 1.0 - (age / fragment.userData.lifeTime);
-                fragment.scale.set(scale, scale, scale);
+                // Shrink the fragment over time (unless specified not to)
+                if (fragment.userData.noShrink !== true) {
+                    const scale = 1.0 - (age / lifeTime);
+                    fragment.scale.set(scale, scale, scale);
+                }
+                
+                // Fade out if opacity should be adjusted
+                if (fragment.material && fragment.material.transparent && fragment.userData.fade !== false) {
+                    fragment.material.opacity = Math.max(0, 1.0 - (age / lifeTime));
+                }
             } else {
                 // Make the fragment invisible if it's dead
                 fragment.visible = false;
