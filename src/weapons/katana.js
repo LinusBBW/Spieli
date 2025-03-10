@@ -103,7 +103,7 @@ function createPetalFragment(position, color, size = 0.04) {
 }
 
 // Create the swirling petal cloud for Senbonzakura
-function createSenbonzakuraEffect(position, fragmentCount = 5000) { // Increased from 2000 to 5000
+function createSenbonzakuraEffect(position, fragmentCount = 500) { // Increased from 5000 to 7000 for more dramatic effect
     // Pink/purple color for the petals
     const baseColor = new THREE.Color(0xF06292); // Pink
     
@@ -433,7 +433,7 @@ function updateSenbonzakuraFragments(playerPosition) {
 }
 
 // Send fragments to attack targets
-function attackWithSenbonzakura(targets, percentToSend = 0.2) {
+function attackWithSenbonzakura(targets, percentToSend = 0.3) { // Increased percentage from 0.2 to 0.3
     if (!targets || targets.length === 0 || senbonzakuraFragments.length === 0) {
         return;
     }
@@ -554,16 +554,16 @@ function updateBankaiAnimation(specialProgress, katana, controls, originalCamera
             console.log("Creating petals at:", katanaWorldPos);
             
             // Create massive ring flash effect
-            createEnergyRing(katanaWorldPos, 0xF06292, 2.0);
+            createEnergyRing(katanaWorldPos, 0xF06292, 3.0); // Increased size from 2.0 to 3.0
             
             // Create dramatic screen shake
-            createScreenShake(0.15, 0.8);
+            createScreenShake(0.2, 0.8); // Increased intensity from 0.15 to 0.2
             
             // Create petals (with increased count)
-            createSenbonzakuraEffect(katanaWorldPos, 1000); // Increased petal count
+            createSenbonzakuraEffect(katanaWorldPos, 7000); // Increased petal count
             
             // Add a large flash of light effect at the transformation point
-            const flashGeometry = new THREE.SphereGeometry(1.0, 16, 16); // Larger flash
+            const flashGeometry = new THREE.SphereGeometry(1.5, 16, 16); // Larger flash (increased from 1.0 to 1.5)
             const flashMaterial = new THREE.MeshBasicMaterial({
                 color: 0xFF77BB, // Brighter pink
                 transparent: true,
@@ -601,7 +601,7 @@ function updateBankaiAnimation(specialProgress, katana, controls, originalCamera
             activeFragments.push(flashGroup);
             
             // Create ground ripple effect
-            createGroundRipple(katanaWorldPos, 0xF06292, 5.0);
+            createGroundRipple(katanaWorldPos, 0xF06292, 8.0); // Increased radius from 5.0 to 8.0
         }
     }
     // Phase 3: Petals swirling and attacking
@@ -705,8 +705,8 @@ function checkSenbonzakuraCubeHits() {
             }
         }
         
-        // If enough fragments hit, destroy the cube (threshold: 3 fragments)
-        if (hitCount >= 3) {
+        // If enough fragments hit, destroy the cube (reduced threshold from 3 to 2 fragments for easier cube destruction)
+        if (hitCount >= 2) {
             // Create destruction effect
             createDestroyEffect(cube.position, cube.material.color);
             

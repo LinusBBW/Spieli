@@ -18,6 +18,7 @@ import { cubes } from '../entities/enemies.js';
 import { createDestroyEffect, activeFragments } from '../effects/particles.js';
 import { createMagicEffect } from '../effects/particles.js';
 import { createEnergySlice, createScreenShake } from '../effects/animations.js';
+import { showBankaiCutScene } from './bankai-cutscene.js';
 
 // Weapon state variables
 let activeWeapon = "sword"; // "sword", "katana", or "wand"
@@ -211,21 +212,27 @@ function startSwordSpecial(controls) {
     }, 800); // Timing for when sword hits ground
 }
 
-// Start the katana special move
+// Start the katana special move with dramatic cut scene
 function startKatanaSpecial(controls) {
-    isPerformingSpecial = true;
-    specialProgress = 0;
-    
-    // Save original camera rotation
-    originalCameraRotation = camera.rotation.y;
-    
-    // Temporarily disable controls
+    // Disable controls immediately
     controls.enabled = false;
     
-    // Re-enable controls after the special move
-    setTimeout(() => {
-        controls.enabled = true;
-    }, 1500); // 1.5 seconds
+    // Show the Bankai cut scene
+    showBankaiCutScene(() => {
+        // This callback runs after the cut scene finishes
+        
+        // Now start the actual special move
+        isPerformingSpecial = true;
+        specialProgress = 0;
+        
+        // Save original camera rotation
+        originalCameraRotation = camera.rotation.y;
+        
+        // Re-enable controls after another second
+        setTimeout(() => {
+            controls.enabled = true;
+        }, 1000);
+    });
 }
 
 // Start the wand special move
@@ -328,169 +335,168 @@ function updateWeaponAnimations() {
                     crystal.material.color.setHSL(0.6 - t * 0.1, 0.9, 0.7);
                 } else {
                     // Standard sword/katana animation
-                    activeWeaponObj.rotation.x = originalSwordRotation.x - Math.PI / 4 + (Math)
-                        activeWeaponObj.rotation.x = originalSwordRotation.x - Math.PI / 4 + (Math.PI / 2) * t;
-                        activeWeaponObj.rotation.z = originalSwordRotation.z - Math.PI / 6 + (Math.PI / 3) * t;
-                    }
-                    
-                    canDestroy = true; // Destruction possible in the main swing phase
-                    
-                    // Check for cube hits
-                    if (swingProgress > 0.4 && swingProgress < 0.6) {
-                        checkCubeHits();
-                    }
+                    activeWeaponObj.rotation.x = originalSwordRotation.x - Math.PI / 4 + (Math.PI / 2) * t;
+                    activeWeaponObj.rotation.z = originalSwordRotation.z - Math.PI / 6 + (Math.PI / 3) * t;
                 }
-                // Third phase: Return to starting position
-                else {
-                    const t = (swingProgress - 0.7) / 0.3;
-                    
-                    if (activeWeapon === "wand") {
-                        // Wand return animation
-                        wand.rotation.y = Math.PI / 10 + Math.PI / 4 - (Math.PI / 4) * t;
-                        wand.rotation.z = -Math.PI / 8 + Math.PI / 6 - (Math.PI / 6) * t;
-                        
-                        // Crystal calms down
-                        const crystal = wand.children[5];
-                        crystal.scale.set(1.3 - t * 0.3, 1.3 - t * 0.3, 1.3 - t * 0.3);
-                        crystal.material.color.setHSL(0.5, 0.8, 0.7 - t * 0.2);
-                    } else {
-                        // Standard sword/katana animation
-                        activeWeaponObj.rotation.x = originalSwordRotation.x + Math.PI / 4 - (Math.PI / 4) * t;
-                        activeWeaponObj.rotation.z = originalSwordRotation.z + Math.PI / 6 - (Math.PI / 6) * t;
-                    }
-                    
-                    canDestroy = false; // No destruction in the return phase
-                }
-            } else {
-                // End animation and return to original position
-                if (activeWeapon === "sword") {
-                    sword.rotation.x = originalSwordRotation.x;
-                    sword.rotation.z = originalSwordRotation.z;
-                } else if (activeWeapon === "katana") {
-                    katana.rotation.x = originalSwordRotation.x;
-                    katana.rotation.z = originalSwordRotation.z;
-                } else {
-                    // Reset wand
-                    wand.rotation.y = Math.PI / 10;
-                    wand.rotation.z = -Math.PI / 8;
-                    
-                    // Reset crystal
-                    const crystal = wand.children[5];
-                    crystal.scale.set(1, 1, 1);
-                    crystal.material.color.setHSL(0.55, 0.8, 0.5);
-                }
-                isSwinging = false;
-            }
-        }
-    }
-    
-    // Update special move effects and cooldowns
-    function updateWeaponSpecials(controls) {
-        // Update special move cooldowns
-        if (specialCooldown > 0) {
-            specialCooldown--;
-        }
-        
-        if (swordSpecialCooldown > 0) {
-            swordSpecialCooldown--;
-        }
-        
-        if (wandSpecialCooldown > 0) {
-            wandSpecialCooldown--;
-        }
-        
-        // Special move animations based on active weapon
-        if (isPerformingSpecial) {
-            // Update the special progress
-            specialProgress += 0.01; // Slower speed for better effects
-            
-            if (specialProgress <= 1) {
-                if (isSwordSpecialActive) {
-                    // Sword special animation
-                    updateSwordSpecialAnimation(specialProgress, sword, controls, originalCameraRotation);
-                } else {
-                    // Katana Bankai animation - Senbonzakura Kageyoshi
-                    updateBankaiAnimation(specialProgress, katana, controls, originalCameraRotation, camera.position.clone());
-                    
-                    // Check for cube hits from the petal fragments
-                    checkSenbonzakuraCubeHits();
-                }
-            } else {
-                // End special move
-                isPerformingSpecial = false;
                 
-                if (isSwordSpecialActive) {
-                    swordSpecialCooldown = swordSpecialMaxCooldown;
-                    isSwordSpecialActive = false;
-                    
-                    // Reset sword
-                    sword.position.set(0.3, -0.2, -0.5);
-                    sword.rotation.x = Math.PI / 6;
-                    sword.rotation.z = -Math.PI / 8;
-                    sword.children[2].material.color.setRGB(0.75, 0.75, 0.75); // Reset blade color
-                    sword.children[2].scale.set(1, 1, 1); // Reset blade scale
-                } else {
-                    specialCooldown = specialMaxCooldown;
-                    
-                    // Reset katana
-                    katana.visible = true;
-                    katana.position.set(0.3, -0.2, -0.5);
-                    katana.rotation.x = Math.PI / 6;
-                    katana.rotation.z = -Math.PI / 8;
-                    katana.children[2].material.color.setRGB(0.75, 0.75, 0.75); // Silver
-                    katana.children[2].scale.set(1, 1, 1); // Original size
+                canDestroy = true; // Destruction possible in the main swing phase
+                
+                // Check for cube hits
+                if (swingProgress > 0.4 && swingProgress < 0.6) {
+                    checkCubeHits();
                 }
             }
+            // Third phase: Return to starting position
+            else {
+                const t = (swingProgress - 0.7) / 0.3;
+                
+                if (activeWeapon === "wand") {
+                    // Wand return animation
+                    wand.rotation.y = Math.PI / 10 + Math.PI / 4 - (Math.PI / 4) * t;
+                    wand.rotation.z = -Math.PI / 8 + Math.PI / 6 - (Math.PI / 6) * t;
+                    
+                    // Crystal calms down
+                    const crystal = wand.children[5];
+                    crystal.scale.set(1.3 - t * 0.3, 1.3 - t * 0.3, 1.3 - t * 0.3);
+                    crystal.material.color.setHSL(0.5, 0.8, 0.7 - t * 0.2);
+                } else {
+                    // Standard sword/katana animation
+                    activeWeaponObj.rotation.x = originalSwordRotation.x + Math.PI / 4 - (Math.PI / 4) * t;
+                    activeWeaponObj.rotation.z = originalSwordRotation.z + Math.PI / 6 - (Math.PI / 6) * t;
+                }
+                
+                canDestroy = false; // No destruction in the return phase
+            }
+        } else {
+            // End animation and return to original position
+            if (activeWeapon === "sword") {
+                sword.rotation.x = originalSwordRotation.x;
+                sword.rotation.z = originalSwordRotation.z;
+            } else if (activeWeapon === "katana") {
+                katana.rotation.x = originalSwordRotation.x;
+                katana.rotation.z = originalSwordRotation.z;
+            } else {
+                // Reset wand
+                wand.rotation.y = Math.PI / 10;
+                wand.rotation.z = -Math.PI / 8;
+                
+                // Reset crystal
+                const crystal = wand.children[5];
+                crystal.scale.set(1, 1, 1);
+                crystal.material.color.setHSL(0.55, 0.8, 0.5);
+            }
+            isSwinging = false;
+        }
+    }
+}
+
+// Update special move effects and cooldowns
+function updateWeaponSpecials(controls) {
+    // Update special move cooldowns
+    if (specialCooldown > 0) {
+        specialCooldown--;
+    }
+    
+    if (swordSpecialCooldown > 0) {
+        swordSpecialCooldown--;
+    }
+    
+    if (wandSpecialCooldown > 0) {
+        wandSpecialCooldown--;
+    }
+    
+    // Special move animations based on active weapon
+    if (isPerformingSpecial) {
+        // Update the special progress
+        specialProgress += 0.01; // Slower speed for better effects
+        
+        if (specialProgress <= 1) {
+            if (isSwordSpecialActive) {
+                // Sword special animation
+                updateSwordSpecialAnimation(specialProgress, sword, controls, originalCameraRotation);
+            } else {
+                // Katana Bankai animation - Senbonzakura Kageyoshi
+                updateBankaiAnimation(specialProgress, katana, controls, originalCameraRotation, camera.position.clone());
+                
+                // Check for cube hits from the petal fragments
+                checkSenbonzakuraCubeHits();
+            }
+        } else {
+            // End special move
+            isPerformingSpecial = false;
+            
+            if (isSwordSpecialActive) {
+                swordSpecialCooldown = swordSpecialMaxCooldown;
+                isSwordSpecialActive = false;
+                
+                // Reset sword
+                sword.position.set(0.3, -0.2, -0.5);
+                sword.rotation.x = Math.PI / 6;
+                sword.rotation.z = -Math.PI / 8;
+                sword.children[2].material.color.setRGB(0.75, 0.75, 0.75); // Reset blade color
+                sword.children[2].scale.set(1, 1, 1); // Reset blade scale
+            } else {
+                specialCooldown = specialMaxCooldown;
+                
+                // Reset katana
+                katana.visible = true;
+                katana.position.set(0.3, -0.2, -0.5);
+                katana.rotation.x = Math.PI / 6;
+                katana.rotation.z = -Math.PI / 8;
+                katana.children[2].material.color.setRGB(0.75, 0.75, 0.75); // Silver
+                katana.children[2].scale.set(1, 1, 1); // Original size
+            }
+        }
+    }
+    
+    // Wand special move (Arkanorb) animation
+    if (isWandSpecialActive) {
+        // Decrease special move duration
+        wandSpecialDuration--;
+        
+        // Update the arkanorb
+        if (arkanorb) {
+            updateArkanorbAnimation(arkanorb, camera);
         }
         
-        // Wand special move (Arkanorb) animation
-        if (isWandSpecialActive) {
-            // Decrease special move duration
-            wandSpecialDuration--;
-            
-            // Update the arkanorb
-            if (arkanorb) {
-                updateArkanorbAnimation(arkanorb, camera);
-            }
-            
-            // End special move if duration is over
-            if (wandSpecialDuration <= 0) {
-                isWandSpecialActive = false;
-                wandSpecialCooldown = wandSpecialMaxCooldown;
-                removeArkanorb(arkanorb);
-                arkanorb = null;
-            }
+        // End special move if duration is over
+        if (wandSpecialDuration <= 0) {
+            isWandSpecialActive = false;
+            wandSpecialCooldown = wandSpecialMaxCooldown;
+            removeArkanorb(arkanorb);
+            arkanorb = null;
         }
     }
-    
-    // Get the currently active weapon object
-    function getActiveWeaponObject() {
-        if (activeWeapon === "sword") {
-            return sword;
-        } else if (activeWeapon === "katana") {
-            return katana;
-        } else {
-            return wand;
-        }
+}
+
+// Get the currently active weapon object
+function getActiveWeaponObject() {
+    if (activeWeapon === "sword") {
+        return sword;
+    } else if (activeWeapon === "katana") {
+        return katana;
+    } else {
+        return wand;
     }
-    
-    // Export weapon system
-    export {
-        initWeapons,
-        updateWeaponAnimations,
-        updateWeaponSpecials,
-        activeWeapon,
-        swingWeapon,
-        isPerformingSpecial,
-        specialProgress,
-        specialCooldown,
-        specialMaxCooldown,
-        isWandSpecialActive,
-        wandSpecialDuration,
-        wandSpecialMaxDuration,
-        wandSpecialCooldown,
-        wandSpecialMaxCooldown,
-        isSwordSpecialActive,
-        swordSpecialCooldown,
-        swordSpecialMaxCooldown
-    };
+}
+
+// Export weapon system
+export {
+    initWeapons,
+    updateWeaponAnimations,
+    updateWeaponSpecials,
+    activeWeapon,
+    swingWeapon,
+    isPerformingSpecial,
+    specialProgress,
+    specialCooldown,
+    specialMaxCooldown,
+    isWandSpecialActive,
+    wandSpecialDuration,
+    wandSpecialMaxDuration,
+    wandSpecialCooldown,
+    wandSpecialMaxCooldown,
+    isSwordSpecialActive,
+    swordSpecialCooldown,
+    swordSpecialMaxCooldown
+};
