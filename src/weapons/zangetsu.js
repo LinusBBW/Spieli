@@ -12,54 +12,68 @@ function createZangetsu(camera) {
     // Group for the Zangetsu
     const zangetsu = new THREE.Group();
     
-    // Handle - longer than other weapons
-    const handleGeometry = new THREE.CylinderGeometry(0.02, 0.02, 0.35, 32);
-    const handleMaterial = new THREE.MeshBasicMaterial({ color: 0x222222 }); // Dark gray
+    // Two-handed handle - longer and thicker
+    const handleGeometry = new THREE.CylinderGeometry(0.03, 0.025, 0.6, 32);
+    const handleMaterial = new THREE.MeshBasicMaterial({ color: 0x121212 }); // Almost black
     const handle = new THREE.Mesh(handleGeometry, handleMaterial);
     
-    // Blade - cleaver-like design
-    const bladeGeometry = new THREE.BoxGeometry(0.06, 0.7, 0.01);
-    const bladeMaterial = new THREE.MeshBasicMaterial({ color: 0xAAAAAA }); // Silver gray
+    // Blade - massive cleaver design inspired by the reference
+    const bladeGeometry = new THREE.BoxGeometry(0.1, 1.2, 0.02);
+    const bladeMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0xC0C0C0,  // Silver, but slightly darker
+        side: THREE.DoubleSide
+    });
     const blade = new THREE.Mesh(bladeGeometry, bladeMaterial);
-    blade.position.y = 0.5; // Above the handle
     
-    // Add wrapping around the handle
-    const wrappingGeometry = new THREE.CylinderGeometry(0.022, 0.022, 0.3, 16);
-    const wrappingMaterial = new THREE.MeshBasicMaterial({ color: 0x880000 }); // Dark red
+    // Position blade relative to handle - more dramatic positioning
+    blade.position.y = 0.9; // Longer blade, positioned higher
+    
+    // Blade edge detail
+    const edgeGeometry = new THREE.BoxGeometry(0.105, 1.21, 0.005);
+    const edgeMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0x444444, // Dark gray for edge
+        side: THREE.DoubleSide 
+    });
+    const bladeEdge = new THREE.Mesh(edgeGeometry, edgeMaterial);
+    bladeEdge.position.z = 0.0125; // Slightly offset to create an edge effect
+    
+    // Handle wrapping - more textured look
+    const wrappingGeometry = new THREE.CylinderGeometry(0.032, 0.03, 0.5, 16, 1, true);
+    const wrappingMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0x880000,  // Dark red 
+        side: THREE.DoubleSide
+    });
     const wrapping = new THREE.Mesh(wrappingGeometry, wrappingMaterial);
+    wrapping.position.y = 0.3; // Center of the handle
     
-    // Chain at the end of the handle
-    const chainLinkCount = 5;
-    const chainLinks = new THREE.Group();
+    // Secondary handle grip (bottom part)
+    const secondaryGripGeometry = new THREE.CylinderGeometry(0.025, 0.03, 0.2, 16);
+    const secondaryGripMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0x333333,  // Slightly lighter than handle
+        side: THREE.DoubleSide
+    });
+    const secondaryGrip = new THREE.Mesh(secondaryGripGeometry, secondaryGripMaterial);
+    secondaryGrip.position.y = -0.2; // Below the main handle
     
-    for (let i = 0; i < chainLinkCount; i++) {
-        const linkGeometry = new THREE.TorusGeometry(0.02, 0.005, 8, 16);
-        const linkMaterial = new THREE.MeshBasicMaterial({ color: 0x555555 });
-        const link = new THREE.Mesh(linkGeometry, linkMaterial);
-        
-        // Position each link below the handle with appropriate spacing
-        link.position.y = -0.2 - (i * 0.04);
-        
-        // Alternate the rotation to make them look like chain links
-        if (i % 2 === 0) {
-            link.rotation.x = Math.PI / 2;
-        } else {
-            link.rotation.y = Math.PI / 2;
-        }
-        
-        chainLinks.add(link);
-    }
+    // Add a subtle chain or decoration
+    const chainLink = new THREE.TorusGeometry(0.02, 0.003, 8, 16);
+    const chainMaterial = new THREE.MeshBasicMaterial({ color: 0x555555 });
+    const hangingChain = new THREE.Mesh(chainLink, chainMaterial);
+    hangingChain.position.y = -0.35; // Hanging below the secondary grip
+    hangingChain.rotation.x = Math.PI / 2;
     
     // Add all parts to Zangetsu
     zangetsu.add(handle);
     zangetsu.add(blade);
+    zangetsu.add(bladeEdge);
     zangetsu.add(wrapping);
-    zangetsu.add(chainLinks);
+    zangetsu.add(secondaryGrip);
+    zangetsu.add(hangingChain);
     
-    // Position the weapon
-    zangetsu.position.set(0.3, -0.2, -0.5);
-    zangetsu.rotation.x = Math.PI / 6;
-    zangetsu.rotation.z = -Math.PI / 8;
+    // Two-handed positioning - more dramatic and anime-like
+    zangetsu.position.set(0.4, -0.3, -0.6);
+    zangetsu.rotation.x = Math.PI / 4;  // Slightly more angled
+    zangetsu.rotation.z = -Math.PI / 6; // More pronounced angle
     
     // Add to camera
     camera.add(zangetsu);
@@ -68,6 +82,60 @@ function createZangetsu(camera) {
     zangetsu.visible = false;
     
     return zangetsu;
+}
+
+// Create smaller companion sword (Tensa Zangetsu)
+function createTensaZangetsu(camera) {
+    // Group for the Tensa Zangetsu
+    const tensaZangetsu = new THREE.Group();
+    
+    // Handle - slimmer and shorter
+    const handleGeometry = new THREE.CylinderGeometry(0.02, 0.018, 0.25, 32);
+    const handleMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 }); // Pitch black
+    const handle = new THREE.Mesh(handleGeometry, handleMaterial);
+    
+    // Blade - slim, precise design
+    const bladeGeometry = new THREE.BoxGeometry(0.03, 0.5, 0.005);
+    const bladeMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0xC0C0C0,  // Silver
+        side: THREE.DoubleSide
+    });
+    const blade = new THREE.Mesh(bladeGeometry, bladeMaterial);
+    
+    // Blade edge detail
+    const edgeGeometry = new THREE.BoxGeometry(0.035, 0.51, 0.002);
+    const edgeMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0x444444, // Dark gray for edge
+        side: THREE.DoubleSide 
+    });
+    const bladeEdge = new THREE.Mesh(edgeGeometry, edgeMaterial);
+    bladeEdge.position.z = 0.0025; // Slight offset for edge effect
+    
+    // Hand guard (Tsuba)
+    const tsubaGeometry = new THREE.CylinderGeometry(0.04, 0.04, 0.01, 32);
+    const tsubaMaterial = new THREE.MeshBasicMaterial({ color: 0x222222 }); // Dark gray
+    const tsuba = new THREE.Mesh(tsubaGeometry, tsubaMaterial);
+    tsuba.rotation.x = Math.PI / 2; // Rotate to be horizontal
+    tsuba.position.y = 0.15; // Position at the guard location
+    
+    // Add all parts to Tensa Zangetsu
+    tensaZangetsu.add(handle);
+    tensaZangetsu.add(blade);
+    tensaZangetsu.add(bladeEdge);
+    tensaZangetsu.add(tsuba);
+    
+    // Positioning for left hand
+    tensaZangetsu.position.set(-0.3, -0.2, -0.5);
+    tensaZangetsu.rotation.x = Math.PI / 6;
+    tensaZangetsu.rotation.z = Math.PI / 8; // Mirrored z-rotation
+    
+    // Add to camera
+    camera.add(tensaZangetsu);
+    
+    // Hide by default
+    tensaZangetsu.visible = false;
+    
+    return tensaZangetsu;
 }
 
 // Create Ju Jisho energy blast - X-shaped with a ball in the middle
@@ -748,6 +816,7 @@ function updateJuJishoAnimation(specialProgress, zangetsu, controls, playerPosit
 }
 export {
     createZangetsu,
+    createTensaZangetsu,
     updateJuJishoAnimation,
     createJuJisho
 };

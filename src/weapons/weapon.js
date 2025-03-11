@@ -16,6 +16,7 @@ import {
 } from './wand.js';
 import { 
     createZangetsu, 
+    createTensaZangetsu,
     updateJuJishoAnimation,
     createJuJisho
 } from './zangetsu.js';
@@ -33,7 +34,7 @@ let swingProgress = 0;
 let canDestroy = false;
 
 // References to weapon objects
-let sword, katana, wand, zangetsu;
+let sword, katana, wand, zangetsu, tensaZangetsu;
 
 // Original rotation for the sword (used for animations)
 let originalSwordRotation = {
@@ -77,12 +78,14 @@ function initWeapons(camera, controls) {
     katana = createKatana(camera);
     wand = createWand(camera);
     zangetsu = createZangetsu(camera);
+    tensaZangetsu = createTensaZangetsu(camera);
     
     // Show initial weapon
     sword.visible = true;
     katana.visible = false;
     wand.visible = false;
     zangetsu.visible = false;
+    tensaZangetsu.visible = false;
     
     // Set up event listeners
     setupWeaponEventListeners(controls);
@@ -119,10 +122,10 @@ function setupWeaponEventListeners(controls) {
                 activateSpecialMove(controls);
                 break;
         }
-    });
+    }); 
 }
 
-// Cycle through weapons (sword -> katana -> wand -> zangetsu -> sword)
+// Cycle through weapons (sword -> katana -> wand -> zangetsu with Tensa -> sword)
 function cycleWeapon() {
     if (activeWeapon === "sword") {
         activeWeapon = "katana";
@@ -130,6 +133,7 @@ function cycleWeapon() {
         katana.visible = true;
         wand.visible = false;
         zangetsu.visible = false;
+        tensaZangetsu.visible = false;
         console.log("Katana selected");
     } else if (activeWeapon === "katana") {
         activeWeapon = "wand";
@@ -137,6 +141,7 @@ function cycleWeapon() {
         katana.visible = false;
         wand.visible = true;
         zangetsu.visible = false;
+        tensaZangetsu.visible = false;
         console.log("Wand selected");
     } else if (activeWeapon === "wand") {
         activeWeapon = "zangetsu";
@@ -144,13 +149,15 @@ function cycleWeapon() {
         katana.visible = false;
         wand.visible = false;
         zangetsu.visible = true;
-        console.log("Zangetsu selected");
+        tensaZangetsu.visible = true;
+        console.log("Zangetsu and Tensa Zangetsu selected");
     } else {
         activeWeapon = "sword";
         sword.visible = true;
         katana.visible = false;
         wand.visible = false;
         zangetsu.visible = false;
+        tensaZangetsu.visible = false;
         console.log("Sword selected");
     }
 }
