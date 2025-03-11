@@ -18,12 +18,14 @@ import {
 } from '../ui/indicators.js';
 import { 
     updateWeaponAnimations, 
-    updateWeaponSpecials
+    updateWeaponSpecials,
+    activeWeapon
 } from '../weapons/weapon.js';
 import { updateFeet } from '../entities/player.js';
 import { updateCubes } from '../entities/enemies.js';
 import { updateParticles } from '../effects/particles.js';
 import { createDashEffect } from '../effects/particles.js';
+import { animateMugetsu, animateBandagedArm } from '../weapons/mugetsu.js';
 
 // Store animation frame ID for potential cancellation
 let animationFrameId;
@@ -31,9 +33,16 @@ let animationFrameId;
 // Step for the step cycle used in walking animation
 let stepCycle = 0;
 
+// Time for delta calculation
+let lastTime = 0;
+
 // Main animation loop
-function animate() {
+function animate(time) {
     animationFrameId = requestAnimationFrame(animate);
+    
+    // Calculate delta time for animations
+    const deltaTime = (time - lastTime) / 1000; // Convert to seconds
+    lastTime = time;
     
     // Update cube rotations
     updateCubes();
@@ -86,7 +95,8 @@ function animate() {
 // Start the animation loop
 function startAnimationLoop() {
     if (!animationFrameId) {
-        animate();
+        lastTime = performance.now();
+        animate(lastTime);
     }
 }
 

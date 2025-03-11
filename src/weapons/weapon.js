@@ -23,7 +23,9 @@ import {
 import {
     createMugetsu,
     createBandagedArm,
-    updateMugetsuAnimation
+    updateMugetsuAnimation,
+    animateMugetsu,
+    animateBandagedArm
 } from './mugetsu.js';
 import { cubes } from '../entities/enemies.js';
 import { createDestroyEffect, activeFragments } from '../effects/particles.js';
@@ -100,6 +102,7 @@ function initWeapons(camera, controls) {
     zangetsu.visible = false;
     tensaZangetsu.visible = false;
     mugetsu.visible = false;
+    bandagedArm.visible = false; // Make sure bandaged arm is hidden initially
     
     // Set up event listeners
     setupWeaponEventListeners(controls);
@@ -149,6 +152,7 @@ function cycleWeapon() {
         zangetsu.visible = false;
         tensaZangetsu.visible = false;
         mugetsu.visible = false;
+        bandagedArm.visible = false;
         console.log("Katana selected");
     } else if (activeWeapon === "katana") {
         activeWeapon = "wand";
@@ -158,6 +162,7 @@ function cycleWeapon() {
         zangetsu.visible = false;
         tensaZangetsu.visible = false;
         mugetsu.visible = false;
+        bandagedArm.visible = false;
         console.log("Wand selected");
     } else if (activeWeapon === "wand") {
         activeWeapon = "zangetsu";
@@ -167,6 +172,7 @@ function cycleWeapon() {
         zangetsu.visible = true;
         tensaZangetsu.visible = true;
         mugetsu.visible = false;
+        bandagedArm.visible = false;
         console.log("Zangetsu and Tensa Zangetsu selected");
     } else if (activeWeapon === "zangetsu") {
         activeWeapon = "mugetsu";
@@ -176,6 +182,7 @@ function cycleWeapon() {
         zangetsu.visible = false;
         tensaZangetsu.visible = false;
         mugetsu.visible = true;
+        bandagedArm.visible = false;
         console.log("Mugetsu selected");
     } else {
         activeWeapon = "sword";
@@ -185,7 +192,219 @@ function cycleWeapon() {
         zangetsu.visible = false;
         tensaZangetsu.visible = false;
         mugetsu.visible = false;
+        bandagedArm.visible = false;
         console.log("Sword selected");
+    }
+}
+
+// Update weapon animations
+function updateWeaponAnimations() {
+    const activeWeaponObj = getActiveWeaponObject();
+    
+    // If not swinging, make the weapon hover slightly
+    if (!isSwinging) {
+        if (activeWeapon === "sword") {
+            sword.position.y = -0.2 + Math.sin(Date.now() * 0.003) * 0.01;
+            sword.rotation.z = originalSwordRotation.z + Math.sin(Date.now() * 0.002) * 0.05;
+        } else if (activeWeapon === "katana") {
+            katana.position.y = -0.2 + Math.sin(Date.now() * 0.003) * 0.01;
+            katana.rotation.z = originalSwordRotation.z + Math.sin(Date.now() * 0.002) * 0.05;
+        } else if (activeWeapon === "wand") {
+            // Wand hovers more and rotates slightly
+            wand.position.y = -0.2 + Math.sin(Date.now() * 0.002) * 0.02;
+            wand.rotation.y = Math.PI / 10 + Math.sin(Date.now() * 0.001) * 0.1;
+            
+            // Animation for the crystal on the wand
+            const crystal = wand.children[5]; // The crystal is the sixth element
+            const pulseFactor = (Math.sin(Date.now() * 0.005) + 1) / 2; // Value between 0 and 1
+            
+            // Pulsing effect for the crystal
+            crystal.scale.set(
+                0.8 + pulseFactor * 0.4,
+                0.8 + pulseFactor * 0.4,
+                0.8 + pulseFactor * 0.4
+            );
+            
+            // Change color slightly for a glowing effect
+            crystal.material.color.setHSL(
+                0.55 + pulseFactor * 0.1, // Hue (blue to turquoise)
+                0.8,                      // Saturation
+                0.5 + pulseFactor * 0.3   // Brightness
+            );
+        } else if (activeWeapon === "zangetsu") {
+            // Zangetsu has a more deliberate, weighty hover
+            zangetsu.position.y = -0.2 + Math.sin(Date.now() * 0.002) * 0.01;
+            zangetsu.rotation.z = originalSwordRotation.z + Math.sin(Date.now() * 0.001) * 0.03;
+        } else if (activeWeapon === "mugetsu") {
+            // Enhanced Mugetsu hover animation
+            mugetsu.position.y = -0.2 + Math.sin(Date.now() * 0.002) * 0.015;
+            mugetsu.rotation.z = originalSwordRotation.z + Math.sin(Date.now() * 0.001) * 0.03;
+            
+            // Call our enhanced animation function
+            animateMugetsu(mugetsu, 1/60); // Assuming ~60fps
+            
+            // Animate bandaged arm if visible
+            if (bandagedArm && bandagedArm.visible) {
+                animateBandagedArm(bandagedArm, 1/60);
+            }
+        }
+        
+        canDestroy = false; // Can't destroy when not swinging
+    } else {
+        // Weapon swing animation
+        swingProgress += 0.05;
+        
+        if (swingProgress <= 1) {
+            // First phase: Wind up
+            if (swingProgress < 0.3) {
+                const t = swingProgress / 0.3;
+                
+                if (activeWeapon === "wand") {
+                    // Special wand animation
+                    wand.rotation.y = Math.PI / 10 - (Math.PI / 4) * t;
+                    wand.rotation.z = -Math.PI / 8 - (Math.PI / 6) * t;
+                    
+                    // Crystal glows brighter during swing
+                    const crystal = wand.children[5];
+                    crystal.scale.set(1 + t * 0.5, 1 + t * 0.5, 1 + t * 0.5);
+                    crystal.material.color.setHSL(0.6, 0.8, 0.5 + t * 0.5);
+                } else {
+                    // Standard sword/katana/zangetsu/mugetsu animation
+                    activeWeaponObj.rotation.x = originalSwordRotation.x - (Math.PI / 4) * t;
+                    activeWeaponObj.rotation.z = originalSwordRotation.z - (Math.PI / 6) * t;
+                }
+                canDestroy = false; // No destruction in the wind-up phase
+            }
+            // Second phase: Swing
+            else if (swingProgress < 0.7) {
+                const t = (swingProgress - 0.3) / 0.4;
+                
+                if (activeWeapon === "wand") {
+                    // Wand swing animation
+                    wand.rotation.y = Math.PI / 10 - Math.PI / 4 + (Math.PI / 2) * t;
+                    wand.rotation.z = -Math.PI / 8 - Math.PI / 6 + (Math.PI / 3) * t;
+                    
+                    // Create magic effect (during the main swing phase)
+                    if (swingProgress > 0.4 && swingProgress < 0.6 && Math.random() > 0.7) {
+                        // Get wand tip position
+                        const wandTip = new THREE.Vector3();
+                        wand.children[5].getWorldPosition(wandTip);
+                        
+                        // Get direction from camera
+                        const direction = new THREE.Vector3();
+                        camera.getWorldDirection(direction);
+                        
+                        // Create the magic effect
+                        createMagicEffect(wandTip, direction);
+                    }
+                    
+                    // Crystal pulses in the main phase
+                    const crystal = wand.children[5];
+                    const pulse = Math.sin(Date.now() * 0.01) * 0.2 + 1.3;
+                    crystal.scale.set(pulse, pulse, pulse);
+                    crystal.material.color.setHSL(0.6 - t * 0.1, 0.9, 0.7);
+                } else {
+                    // Standard sword/katana/zangetsu/mugetsu animation
+                    activeWeaponObj.rotation.x = originalSwordRotation.x - Math.PI / 4 + (Math.PI / 2) * t;
+                    activeWeaponObj.rotation.z = originalSwordRotation.z - Math.PI / 6 + (Math.PI / 3) * t;
+                    
+                    // Special trails for Mugetsu when swinging
+                    if (activeWeapon === "mugetsu" && Math.random() > 0.7) {
+                        // Find blade position
+                        const bladePos = new THREE.Vector3();
+                        if (mugetsu.children[0]) {
+                            mugetsu.children[0].getWorldPosition(bladePos);
+                            
+                            // Create energy trail particles
+                            for (let i = 0; i < 3; i++) {
+                                const trailParticle = new THREE.Mesh(
+                                    new THREE.SphereGeometry(0.02 + Math.random() * 0.03, 4, 4),
+                                    new THREE.MeshBasicMaterial({
+                                        color: Math.random() > 0.7 ? 0xFF0000 : 0x000000,
+                                        transparent: true,
+                                        opacity: 0.5 + Math.random() * 0.3
+                                    })
+                                );
+                                
+                                // Position at blade with random offset
+                                trailParticle.position.copy(bladePos);
+                                trailParticle.position.x += (Math.random() - 0.5) * 0.1;
+                                trailParticle.position.y += (Math.random() - 0.5) * 0.3;
+                                trailParticle.position.z += (Math.random() - 0.5) * 0.1;
+                                
+                                // Add velocity properties
+                                trailParticle.userData = {
+                                    velocity: new THREE.Vector3(
+                                        (Math.random() - 0.5) * 0.02,
+                                        (Math.random() - 0.5) * 0.02,
+                                        (Math.random() - 0.5) * 0.02
+                                    ),
+                                    lifeTime: 0.3 + Math.random() * 0.2,
+                                    createTime: Date.now()
+                                };
+                                
+                                // Add to scene and active fragments
+                                scene.add(trailParticle);
+                                activeFragments.push(trailParticle);
+                            }
+                        }
+                    }
+                }
+                
+                canDestroy = true; // Destruction possible in the main swing phase
+                
+                // Check for cube hits
+                if (swingProgress > 0.4 && swingProgress < 0.6) {
+                    checkCubeHits();
+                }
+            }
+            // Third phase: Return to starting position
+            else {
+                const t = (swingProgress - 0.7) / 0.3;
+                
+                if (activeWeapon === "wand") {
+                    // Wand return animation
+                    wand.rotation.y = Math.PI / 10 + Math.PI / 4 - (Math.PI / 4) * t;
+                    wand.rotation.z = -Math.PI / 8 + Math.PI / 6 - (Math.PI / 6) * t;
+                    
+                    // Crystal calms down
+                    const crystal = wand.children[5];
+                    crystal.scale.set(1.3 - t * 0.3, 1.3 - t * 0.3, 1.3 - t * 0.3);
+                    crystal.material.color.setHSL(0.5, 0.8, 0.7 - t * 0.2);
+                } else {
+                    // Standard sword/katana/zangetsu/mugetsu animation
+                    activeWeaponObj.rotation.x = originalSwordRotation.x + Math.PI / 4 - (Math.PI / 4) * t;
+                    activeWeaponObj.rotation.z = originalSwordRotation.z + Math.PI / 6 - (Math.PI / 6) * t;
+                }
+                
+                canDestroy = false; // No destruction in the return phase
+            }
+        } else {
+            // End animation and return to original position
+            if (activeWeapon === "sword") {
+                sword.rotation.x = originalSwordRotation.x;
+                sword.rotation.z = originalSwordRotation.z;
+            } else if (activeWeapon === "katana") {
+                katana.rotation.x = originalSwordRotation.x;
+                katana.rotation.z = originalSwordRotation.z;
+            } else if (activeWeapon === "zangetsu") {
+                zangetsu.rotation.x = originalSwordRotation.x;
+                zangetsu.rotation.z = originalSwordRotation.z;
+            } else if (activeWeapon === "mugetsu") {
+                mugetsu.rotation.x = originalSwordRotation.x;
+                mugetsu.rotation.z = originalSwordRotation.z;
+            } else {
+                // Reset wand
+                wand.rotation.y = Math.PI / 10;
+                wand.rotation.z = -Math.PI / 8;
+                
+                // Reset crystal
+                const crystal = wand.children[5];
+                crystal.scale.set(1, 1, 1);
+                crystal.material.color.setHSL(0.55, 0.8, 0.5);
+            }
+            isSwinging = false;
+        }
     }
 }
 
@@ -206,6 +425,161 @@ function activateSpecialMove(controls) {
     } else if (activeWeapon === "mugetsu" && !isPerformingSpecial && mugetsuSpecialCooldown <= 0) {
         startMugetsuSpecial(controls);
         console.log("Mugetsu special move activated");
+    }
+}
+
+// Start the Mugetsu special move
+function startMugetsuSpecial(controls) {
+    // Disable controls immediately
+    controls.enabled = false;
+    
+    // Show the Mugetsu cut scene
+    showMugetsuCutScene(() => {
+        // This callback runs after the cut scene
+        
+        // Start the actual special move
+        isPerformingSpecial = true;
+        specialProgress = 0;
+        isMugetsuSpecialActive = true;
+        
+        // Save original camera rotation
+        originalCameraRotation = camera.rotation.y;
+        
+        // Re-enable controls after a short delay
+        setTimeout(() => {
+            controls.enabled = true;
+        }, 500);
+    });
+}
+
+// Update special move effects and cooldowns
+function updateWeaponSpecials(controls) {
+    // Update special move cooldowns
+    if (specialCooldown > 0) {
+        specialCooldown--;
+    }
+    
+    if (swordSpecialCooldown > 0) {
+        swordSpecialCooldown--;
+    }
+    
+    if (wandSpecialCooldown > 0) {
+        wandSpecialCooldown--;
+    }
+    
+    if (zangetsuSpecialCooldown > 0) {
+        zangetsuSpecialCooldown--;
+    }
+    
+    if (mugetsuSpecialCooldown > 0) {
+        mugetsuSpecialCooldown--;
+    }
+    
+    // Special move animations based on active weapon
+    if (isPerformingSpecial) {
+        // Update the special progress
+        specialProgress += 0.01; // Slower speed for better effects
+        
+        if (specialProgress <= 1) {
+            if (isSwordSpecialActive) {
+                // Sword special animation
+                updateSwordSpecialAnimation(specialProgress, sword, controls, originalCameraRotation);
+            } else if (isZangetsuSpecialActive) {
+                // Zangetsu Ju Jisho animation
+                const cameraDirection = new THREE.Vector3();
+                camera.getWorldDirection(cameraDirection);
+                updateJuJishoAnimation(specialProgress, zangetsu, controls, camera.position.clone(), cameraDirection);
+            } else if (isMugetsuSpecialActive) {
+                // Mugetsu Final Getsuga Tensho animation
+                const cameraDirection = new THREE.Vector3();
+                camera.getWorldDirection(cameraDirection);
+                updateMugetsuAnimation(specialProgress, mugetsu, bandagedArm, controls, camera.position.clone(), cameraDirection);
+            } else {
+                // Katana Bankai animation - Senbonzakura Kageyoshi
+                updateBankaiAnimation(specialProgress, katana, controls, originalCameraRotation, camera.position.clone());
+                
+                // Check for cube hits from the petal fragments
+                checkSenbonzakuraCubeHits();
+            }
+        } else {
+            // End special move
+            isPerformingSpecial = false;
+            
+            if (isSwordSpecialActive) {
+                swordSpecialCooldown = swordSpecialMaxCooldown;
+                isSwordSpecialActive = false;
+                
+                // Reset sword
+                sword.position.set(0.3, -0.2, -0.5);
+                sword.rotation.x = Math.PI / 6;
+                sword.rotation.z = -Math.PI / 8;
+                sword.children[2].material.color.setRGB(0.75, 0.75, 0.75); // Reset blade color
+                sword.children[2].scale.set(1, 1, 1); // Reset blade scale
+            } else if (isZangetsuSpecialActive) {
+                zangetsuSpecialCooldown = zangetsuSpecialMaxCooldown;
+                isZangetsuSpecialActive = false;
+                
+                // Reset zangetsu
+                zangetsu.position.set(0.3, -0.2, -0.5);
+                zangetsu.rotation.x = Math.PI / 6;
+                zangetsu.rotation.z = -Math.PI / 8;
+                zangetsu.rotation.y = 0;
+                zangetsu.children[1].material.color.setRGB(0.67, 0.67, 0.67); // Reset blade color
+            } else if (isMugetsuSpecialActive) {
+                mugetsuSpecialCooldown = mugetsuSpecialMaxCooldown;
+                isMugetsuSpecialActive = false;
+                
+                // Reset mugetsu with gentle transition
+                mugetsu.position.set(0.3, -0.2, -0.5);
+                mugetsu.rotation.x = Math.PI / 6;
+                mugetsu.rotation.z = -Math.PI / 8;
+                
+                // Reset glow layers and particles
+                for (let i = 0; i < mugetsu.children.length; i++) {
+                    const child = mugetsu.children[i];
+                    if (child.userData && child.userData.baseOpacity !== undefined) {
+                        child.material.opacity = child.userData.baseOpacity;
+                        child.scale.set(1.0, 1.0, 1.0);
+                    }
+                    else if (child.userData && child.userData.initialY !== undefined) {
+                        child.material.opacity = 0.4;
+                        child.scale.set(1.0, 1.0, 1.0);
+                    }
+                }
+                
+                // Hide bandaged arm
+                bandagedArm.visible = false;
+            } else {
+                specialCooldown = specialMaxCooldown;
+                
+                // Reset katana
+                katana.visible = true;
+                katana.position.set(0.3, -0.2, -0.5);
+                katana.rotation.x = Math.PI / 6;
+                katana.rotation.z = -Math.PI / 8;
+                katana.children[2].material.color.setRGB(0.75, 0.75, 0.75); // Silver
+                katana.children[2].scale.set(1, 1, 1); // Original size
+            }
+        }
+    }
+    
+    // Wand special move (Arkanorb) animation
+    if (isWandSpecialActive) {
+        // Decrease special move duration
+        wandSpecialDuration--;
+        
+        // Update the arkanorb
+        if (arkanorb) {
+            updateArkanorbAnimation(arkanorb, camera);
+        }
+        
+        // End special move if duration is over
+        if (wandSpecialDuration <= 0) {
+            isWandSpecialActive = false;
+            wandSpecialCooldown = wandSpecialMaxCooldown;
+            removeArkanorb(arkanorb);
+            arkanorb = null;
+        }
     }
 }
 
@@ -346,314 +720,6 @@ function startZangetsuSpecial(controls) {
             createJuJisho(juJishoPosition, cameraDirection);
         }, 100);
     });
-}
-
-// Start the Mugetsu special move
-function startMugetsuSpecial(controls) {
-    // Disable controls immediately
-    controls.enabled = false;
-    
-    // Show the Mugetsu cut scene
-    showMugetsuCutScene(() => {
-        // This callback runs after the cut scene
-        
-        // Start the actual special move
-        isPerformingSpecial = true;
-        specialProgress = 0;
-        isMugetsuSpecialActive = true;
-        
-        // Save original camera rotation
-        originalCameraRotation = camera.rotation.y;
-        
-        // Re-enable controls after a short delay
-        setTimeout(() => {
-            controls.enabled = true;
-        }, 500);
-    });
-}
-
-// Update weapon animations
-function updateWeaponAnimations() {
-    const activeWeaponObj = getActiveWeaponObject();
-    
-    // If not swinging, make the weapon hover slightly
-    if (!isSwinging) {
-        if (activeWeapon === "sword") {
-            sword.position.y = -0.2 + Math.sin(Date.now() * 0.003) * 0.01;
-            sword.rotation.z = originalSwordRotation.z + Math.sin(Date.now() * 0.002) * 0.05;
-        } else if (activeWeapon === "katana") {
-            katana.position.y = -0.2 + Math.sin(Date.now() * 0.003) * 0.01;
-            katana.rotation.z = originalSwordRotation.z + Math.sin(Date.now() * 0.002) * 0.05;
-        } else if (activeWeapon === "wand") {
-            // Wand hovers more and rotates slightly
-            wand.position.y = -0.2 + Math.sin(Date.now() * 0.002) * 0.02;
-            wand.rotation.y = Math.PI / 10 + Math.sin(Date.now() * 0.001) * 0.1;
-            
-            // Animation for the crystal on the wand
-            const crystal = wand.children[5]; // The crystal is the sixth element
-            const pulseFactor = (Math.sin(Date.now() * 0.005) + 1) / 2; // Value between 0 and 1
-            
-            // Pulsing effect for the crystal
-            crystal.scale.set(
-                0.8 + pulseFactor * 0.4,
-                0.8 + pulseFactor * 0.4,
-                0.8 + pulseFactor * 0.4
-            );
-            
-            // Change color slightly for a glowing effect
-            crystal.material.color.setHSL(
-                0.55 + pulseFactor * 0.1, // Hue (blue to turquoise)
-                0.8,                      // Saturation
-                0.5 + pulseFactor * 0.3   // Brightness
-            );
-        } else if (activeWeapon === "zangetsu") {
-            // Zangetsu has a more deliberate, weighty hover
-            zangetsu.position.y = -0.2 + Math.sin(Date.now() * 0.002) * 0.01;
-            zangetsu.rotation.z = originalSwordRotation.z + Math.sin(Date.now() * 0.001) * 0.03;
-        } else if (activeWeapon === "mugetsu") {
-            // Mugetsu has a subtle, ominous hover
-            mugetsu.position.y = -0.2 + Math.sin(Date.now() * 0.002) * 0.01;
-            mugetsu.rotation.z = originalSwordRotation.z + Math.sin(Date.now() * 0.001) * 0.02;
-            
-            // Subtle pulse for the red glow
-            const redGlow = mugetsu.children[2]; // The red glow is the third child
-            const glowFactor = (Math.sin(Date.now() * 0.003) + 1) / 2; // Value between 0 and 1
-            redGlow.material.opacity = 0.1 + glowFactor * 0.1;
-        }
-        canDestroy = false; // Can't destroy when not swinging
-    } else {
-        // Weapon swing animation
-        swingProgress += 0.05;
-        
-        if (swingProgress <= 1) {
-            // First phase: Wind up
-            if (swingProgress < 0.3) {
-                const t = swingProgress / 0.3;
-                
-                if (activeWeapon === "wand") {
-                    // Special wand animation
-                    wand.rotation.y = Math.PI / 10 - (Math.PI / 4) * t;
-                    wand.rotation.z = -Math.PI / 8 - (Math.PI / 6) * t;
-                    
-                    // Crystal glows brighter during swing
-                    const crystal = wand.children[5];
-                    crystal.scale.set(1 + t * 0.5, 1 + t * 0.5, 1 + t * 0.5);
-                    crystal.material.color.setHSL(0.6, 0.8, 0.5 + t * 0.5);
-                } else {
-                    // Standard sword/katana/zangetsu/mugetsu animation
-                    activeWeaponObj.rotation.x = originalSwordRotation.x - (Math.PI / 4) * t;
-                    activeWeaponObj.rotation.z = originalSwordRotation.z - (Math.PI / 6) * t;
-                }
-                canDestroy = false; // No destruction in the wind-up phase
-            }
-            // Second phase: Swing
-            else if (swingProgress < 0.7) {
-                const t = (swingProgress - 0.3) / 0.4;
-                
-                if (activeWeapon === "wand") {
-                    // Wand swing animation
-                    wand.rotation.y = Math.PI / 10 - Math.PI / 4 + (Math.PI / 2) * t;
-                    wand.rotation.z = -Math.PI / 8 - Math.PI / 6 + (Math.PI / 3) * t;
-                    
-                    // Create magic effect (during the main swing phase)
-                    if (swingProgress > 0.4 && swingProgress < 0.6 && Math.random() > 0.7) {
-                        // Get wand tip position
-                        const wandTip = new THREE.Vector3();
-                        wand.children[5].getWorldPosition(wandTip);
-                        
-                        // Get direction from camera
-                        const direction = new THREE.Vector3();
-                        camera.getWorldDirection(direction);
-                        
-                        // Create the magic effect
-                        createMagicEffect(wandTip, direction);
-                    }
-                    
-                    // Crystal pulses in the main phase
-                    const crystal = wand.children[5];
-                    const pulse = Math.sin(Date.now() * 0.01) * 0.2 + 1.3;
-                    crystal.scale.set(pulse, pulse, pulse);
-                    crystal.material.color.setHSL(0.6 - t * 0.1, 0.9, 0.7);
-                } else {
-                    // Standard sword/katana/zangetsu/mugetsu animation
-                    activeWeaponObj.rotation.x = originalSwordRotation.x - Math.PI / 4 + (Math.PI / 2) * t;
-                    activeWeaponObj.rotation.z = originalSwordRotation.z - Math.PI / 6 + (Math.PI / 3) * t;
-                }
-                
-                canDestroy = true; // Destruction possible in the main swing phase
-                
-                // Check for cube hits
-                if (swingProgress > 0.4 && swingProgress < 0.6) {
-                    checkCubeHits();
-                }
-            }
-            // Third phase: Return to starting position
-            else {
-                const t = (swingProgress - 0.7) / 0.3;
-                
-                if (activeWeapon === "wand") {
-                    // Wand return animation
-                    wand.rotation.y = Math.PI / 10 + Math.PI / 4 - (Math.PI / 4) * t;
-                    wand.rotation.z = -Math.PI / 8 + Math.PI / 6 - (Math.PI / 6) * t;
-                    
-                    // Crystal calms down
-                    const crystal = wand.children[5];
-                    crystal.scale.set(1.3 - t * 0.3, 1.3 - t * 0.3, 1.3 - t * 0.3);
-                    crystal.material.color.setHSL(0.5, 0.8, 0.7 - t * 0.2);
-                } else {
-                    // Standard sword/katana/zangetsu/mugetsu animation
-                    activeWeaponObj.rotation.x = originalSwordRotation.x + Math.PI / 4 - (Math.PI / 4) * t;
-                    activeWeaponObj.rotation.z = originalSwordRotation.z + Math.PI / 6 - (Math.PI / 6) * t;
-                }
-                
-                canDestroy = false; // No destruction in the return phase
-            }
-        } else {
-            // End animation and return to original position
-            if (activeWeapon === "sword") {
-                sword.rotation.x = originalSwordRotation.x;
-                sword.rotation.z = originalSwordRotation.z;
-            } else if (activeWeapon === "katana") {
-                katana.rotation.x = originalSwordRotation.x;
-                katana.rotation.z = originalSwordRotation.z;
-            } else if (activeWeapon === "zangetsu") {
-                zangetsu.rotation.x = originalSwordRotation.x;
-                zangetsu.rotation.z = originalSwordRotation.z;
-            } else if (activeWeapon === "mugetsu") {
-                mugetsu.rotation.x = originalSwordRotation.x;
-                mugetsu.rotation.z = originalSwordRotation.z;
-            } else {
-                // Reset wand
-                wand.rotation.y = Math.PI / 10;
-                wand.rotation.z = -Math.PI / 8;
-                
-                // Reset crystal
-                const crystal = wand.children[5];
-                crystal.scale.set(1, 1, 1);
-                crystal.material.color.setHSL(0.55, 0.8, 0.5);
-            }
-            isSwinging = false;
-        }
-    }
-}
-
-// Update special move effects and cooldowns
-function updateWeaponSpecials(controls) {
-    // Update special move cooldowns
-    if (specialCooldown > 0) {
-        specialCooldown--;
-    }
-    
-    if (swordSpecialCooldown > 0) {
-        swordSpecialCooldown--;
-    }
-    
-    if (wandSpecialCooldown > 0) {
-        wandSpecialCooldown--;
-    }
-    
-    if (zangetsuSpecialCooldown > 0) {
-        zangetsuSpecialCooldown--;
-    }
-    
-    if (mugetsuSpecialCooldown > 0) {
-        mugetsuSpecialCooldown--;
-    }
-    
-    // Special move animations based on active weapon
-    if (isPerformingSpecial) {
-        // Update the special progress
-        specialProgress += 0.01; // Slower speed for better effects
-        
-        if (specialProgress <= 1) {
-            if (isSwordSpecialActive) {
-                // Sword special animation
-                updateSwordSpecialAnimation(specialProgress, sword, controls, originalCameraRotation);
-            } else if (isZangetsuSpecialActive) {
-                // Zangetsu Ju Jisho animation
-                const cameraDirection = new THREE.Vector3();
-                camera.getWorldDirection(cameraDirection);
-                updateJuJishoAnimation(specialProgress, zangetsu, controls, camera.position.clone(), cameraDirection);
-            } else if (isMugetsuSpecialActive) {
-                // Mugetsu Final Getsuga Tensho animation
-                const cameraDirection = new THREE.Vector3();
-                camera.getWorldDirection(cameraDirection);
-                updateMugetsuAnimation(specialProgress, mugetsu, bandagedArm, controls, camera.position.clone(), cameraDirection);
-            } else {
-                // Katana Bankai animation - Senbonzakura Kageyoshi
-                updateBankaiAnimation(specialProgress, katana, controls, originalCameraRotation, camera.position.clone());
-                
-                // Check for cube hits from the petal fragments
-                checkSenbonzakuraCubeHits();
-            }
-        } else {
-            // End special move
-            isPerformingSpecial = false;
-            
-            if (isSwordSpecialActive) {
-                swordSpecialCooldown = swordSpecialMaxCooldown;
-                isSwordSpecialActive = false;
-                
-                // Reset sword
-                sword.position.set(0.3, -0.2, -0.5);
-                sword.rotation.x = Math.PI / 6;
-                sword.rotation.z = -Math.PI / 8;
-                sword.children[2].material.color.setRGB(0.75, 0.75, 0.75); // Reset blade color
-                sword.children[2].scale.set(1, 1, 1); // Reset blade scale
-            } else if (isZangetsuSpecialActive) {
-                zangetsuSpecialCooldown = zangetsuSpecialMaxCooldown;
-                isZangetsuSpecialActive = false;
-                
-                // Reset zangetsu
-                zangetsu.position.set(0.3, -0.2, -0.5);
-                zangetsu.rotation.x = Math.PI / 6;
-                zangetsu.rotation.z = -Math.PI / 8;
-                zangetsu.rotation.y = 0;
-                zangetsu.children[1].material.color.setRGB(0.67, 0.67, 0.67); // Reset blade color
-            } else if (isMugetsuSpecialActive) {
-                mugetsuSpecialCooldown = mugetsuSpecialMaxCooldown;
-                isMugetsuSpecialActive = false;
-                
-                // Reset mugetsu
-                mugetsu.position.set(0.3, -0.2, -0.5);
-                mugetsu.rotation.x = Math.PI / 6;
-                mugetsu.rotation.z = -Math.PI / 8;
-                mugetsu.children[0].material.color.setRGB(0, 0, 0); // Keep blade black
-                
-                // Hide bandaged arm
-                bandagedArm.visible = false;
-            } else {
-                specialCooldown = specialMaxCooldown;
-                
-                // Reset katana
-                katana.visible = true;
-                katana.position.set(0.3, -0.2, -0.5);
-                katana.rotation.x = Math.PI / 6;
-                katana.rotation.z = -Math.PI / 8;
-                katana.children[2].material.color.setRGB(0.75, 0.75, 0.75); // Silver
-                katana.children[2].scale.set(1, 1, 1); // Original size
-            }
-        }
-    }
-    
-    // Wand special move (Arkanorb) animation
-    if (isWandSpecialActive) {
-        // Decrease special move duration
-        wandSpecialDuration--;
-        
-        // Update the arkanorb
-        if (arkanorb) {
-            updateArkanorbAnimation(arkanorb, camera);
-        }
-        
-        // End special move if duration is over
-        if (wandSpecialDuration <= 0) {
-            isWandSpecialActive = false;
-            wandSpecialCooldown = wandSpecialMaxCooldown;
-            removeArkanorb(arkanorb);
-            arkanorb = null;
-        }
-    }
 }
 
 // Get the currently active weapon object

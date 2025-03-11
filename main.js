@@ -64,6 +64,22 @@ function initGame() {
         controls.lock();
     });
     
+    // Add a small CSS for cutscene animations
+    const styleElement = document.createElement('style');
+    styleElement.textContent = `
+        @keyframes sway {
+            0% { transform: rotate(70deg); }
+            50% { transform: rotate(90deg); }
+            100% { transform: rotate(70deg); }
+        }
+        
+        @keyframes fall {
+            from { transform: translateY(-100vh); }
+            to { transform: translateY(100vh); }
+        }
+    `;
+    document.head.appendChild(styleElement);
+    
     console.log("Game initialized successfully!");
 }
 
