@@ -83,46 +83,100 @@ function createZangetsu(camera) {
     
     return zangetsu;
 }
-
-// Create smaller companion sword (Tensa Zangetsu)
 function createTensaZangetsu(camera) {
     // Group for the Tensa Zangetsu
     const tensaZangetsu = new THREE.Group();
     
-    // Handle - slimmer and shorter
-    const handleGeometry = new THREE.CylinderGeometry(0.02, 0.018, 0.25, 32);
-    const handleMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 }); // Pitch black
+    // Handle - more detailed and textured
+    const handleGeometry = new THREE.CylinderGeometry(0.02, 0.018, 0.25, 32, 1, true);
+    const handleMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0x1A1A1A,  // Slightly lighter than pure black
+        wireframe: false,
+        side: THREE.DoubleSide
+    });
     const handle = new THREE.Mesh(handleGeometry, handleMaterial);
     
-    // Blade - slim, precise design
-    const bladeGeometry = new THREE.BoxGeometry(0.03, 0.5, 0.005);
+    // Create handle wrapping for more detail
+    const wrappingGeometry = new THREE.CylinderGeometry(0.021, 0.019, 0.25, 32, 1, true);
+    const wrappingMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0x8B0000,  // Dark red for wrapping
+        transparent: true,
+        opacity: 0.6,
+        side: THREE.DoubleSide
+    });
+    const wrapping = new THREE.Mesh(wrappingGeometry, wrappingMaterial);
+    
+    // Slim, precise blade with more complexity
+    const bladeGeometry = new THREE.BoxGeometry(0.025, 0.55, 0.003);
     const bladeMaterial = new THREE.MeshBasicMaterial({ 
         color: 0xC0C0C0,  // Silver
         side: THREE.DoubleSide
     });
     const blade = new THREE.Mesh(bladeGeometry, bladeMaterial);
     
-    // Blade edge detail
-    const edgeGeometry = new THREE.BoxGeometry(0.035, 0.51, 0.002);
+    // More pronounced blade edge
+    const edgeGeometry = new THREE.BoxGeometry(0.03, 0.56, 0.001);
     const edgeMaterial = new THREE.MeshBasicMaterial({ 
-        color: 0x444444, // Dark gray for edge
+        color: 0x666666, // Lighter gray for edge
+        transparent: true,
+        opacity: 0.7,
         side: THREE.DoubleSide 
     });
     const bladeEdge = new THREE.Mesh(edgeGeometry, edgeMaterial);
-    bladeEdge.position.z = 0.0025; // Slight offset for edge effect
+    bladeEdge.position.z = 0.002; // Slight offset for edge effect
     
-    // Hand guard (Tsuba)
-    const tsubaGeometry = new THREE.CylinderGeometry(0.04, 0.04, 0.01, 32);
-    const tsubaMaterial = new THREE.MeshBasicMaterial({ color: 0x222222 }); // Dark gray
-    const tsuba = new THREE.Mesh(tsubaGeometry, tsubaMaterial);
-    tsuba.rotation.x = Math.PI / 2; // Rotate to be horizontal
-    tsuba.position.y = 0.15; // Position at the guard location
+    // Unique hand guard (Tsuba) with more intricate design
+    const tsubaOuterGeometry = new THREE.CylinderGeometry(0.045, 0.045, 0.012, 32);
+    const tsubaInnerGeometry = new THREE.CylinderGeometry(0.035, 0.035, 0.01, 32);
+    const tsubaMaterial = new THREE.MeshBasicMaterial({ color: 0x1A1A1A }); // Dark charcoal
+    const tsubaOuter = new THREE.Mesh(tsubaOuterGeometry, tsubaMaterial);
+    const tsubaInner = new THREE.Mesh(tsubaInnerGeometry, tsubaMaterial);
+    
+    // Slight elevation and separation for the inner part
+    tsubaInner.position.y = 0.001; // Slightly raised
+    
+    // Create a group for the tsuba to allow more complex positioning
+    const tsubaGroup = new THREE.Group();
+    tsubaGroup.add(tsubaOuter);
+    tsubaGroup.add(tsubaInner);
+    tsubaGroup.rotation.x = Math.PI / 2; // Rotate to be horizontal
+    tsubaGroup.position.y = 0.15; // Position at the guard location
+    
+    // Add decorative line details to tsuba
+    const tsubaLineGeometry = new THREE.BoxGeometry(0.035, 0.001, 0.04);
+    const tsubaLineMaterial = new THREE.MeshBasicMaterial({ color: 0x333333 });
+    const tsubaLine1 = new THREE.Mesh(tsubaLineGeometry, tsubaLineMaterial);
+    const tsubaLine2 = new THREE.Mesh(tsubaLineGeometry, tsubaLineMaterial);
+    tsubaLine1.rotation.z = Math.PI / 4;
+    tsubaLine2.rotation.z = -Math.PI / 4;
+    tsubaGroup.add(tsubaLine1);
+    tsubaGroup.add(tsubaLine2);
+    
+    // Small chain or decoration hanging from the bottom of the handle
+    const chainGeometry = new THREE.CylinderGeometry(0.002, 0.002, 0.05, 16);
+    const chainMaterial = new THREE.MeshBasicMaterial({ color: 0x333333 });
+    const chain = new THREE.Mesh(chainGeometry, chainMaterial);
+    chain.position.y = -0.15; // Hang from bottom of handle
+    chain.rotation.x = Math.PI / 4; // Slight angle
+    
+    // Add slight energy effect to the blade
+    const energyLineGeometry = new THREE.BoxGeometry(0.001, 0.56, 0.001);
+    const energyLineMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0x00BFFF,  // Light blue
+        transparent: true,
+        opacity: 0.5
+    });
+    const energyLine = new THREE.Mesh(energyLineGeometry, energyLineMaterial);
+    energyLine.position.x = 0.015; // Offset to one side of the blade
     
     // Add all parts to Tensa Zangetsu
     tensaZangetsu.add(handle);
+    tensaZangetsu.add(wrapping);
     tensaZangetsu.add(blade);
     tensaZangetsu.add(bladeEdge);
-    tensaZangetsu.add(tsuba);
+    tensaZangetsu.add(tsubaGroup);
+    tensaZangetsu.add(chain);
+    tensaZangetsu.add(energyLine);
     
     // Positioning for left hand
     tensaZangetsu.position.set(-0.3, -0.2, -0.5);
@@ -154,35 +208,32 @@ function createJuJisho(position, direction, color = 0xFFD700) { // Gold color
     const core = new THREE.Mesh(coreGeometry, coreMaterial);
     juJishoGroup.add(core);
     
-    // X-förmige Energiestrahlen erstellen
+    // Plus-förmige Energiestrahlen erstellen
     const beamLength = 5.0;
     const beamWidth = 0.5;
-    
-    // Erster diagonaler Strahl (von links oben nach rechts unten)
-    const beam1Geometry = new THREE.BoxGeometry(beamWidth, beamWidth, beamLength);
+
+    // Horizontaler Strahl (entlang der X-Achse)
+    const beam1Geometry = new THREE.BoxGeometry(beamLength, beamWidth, beamWidth);
     const beam1Material = new THREE.MeshBasicMaterial({
         color: color,
         transparent: true,
         opacity: 0.8
     });
-    
     const beam1 = new THREE.Mesh(beam1Geometry, beam1Material);
-    beam1.rotation.x = Math.PI / 4; // 45 Grad Drehung um X-Achse
-    beam1.rotation.y = Math.PI / 4; // 45 Grad Drehung um Y-Achse
+    // Keine zusätzliche Rotation erforderlich – der Strahl liegt standardmäßig entlang der X-Achse
     juJishoGroup.add(beam1);
-    
-    // Zweiter diagonaler Strahl (von rechts oben nach links unten)
-    const beam2Geometry = new THREE.BoxGeometry(beamWidth, beamWidth, beamLength);
+
+    // Vertikaler Strahl (entlang der Y-Achse)
+    const beam2Geometry = new THREE.BoxGeometry(beamWidth, beamLength, beamWidth);
     const beam2Material = new THREE.MeshBasicMaterial({
         color: color,
         transparent: true,
         opacity: 0.8
     });
-    
     const beam2 = new THREE.Mesh(beam2Geometry, beam2Material);
-    beam2.rotation.x = Math.PI / 4;  // 45 Grad Drehung um X-Achse
-    beam2.rotation.y = -Math.PI / 4; // -45 Grad Drehung um Y-Achse
+    // Der Strahl liegt nun standardmäßig entlang der Y-Achse
     juJishoGroup.add(beam2);
+
     
     // Äußeren Glüheffekt hinzufügen
     const glowGeometry = new THREE.SphereGeometry(0.8, 16, 16);
@@ -195,13 +246,15 @@ function createJuJisho(position, direction, color = 0xFFD700) { // Gold color
     const glow = new THREE.Mesh(glowGeometry, glowMaterial);
     juJishoGroup.add(glow);
     
-    // Position and orient the Ju Jisho
+    // Positioniere den JuJisho-Effekt
     juJishoGroup.position.copy(position);
-    
-    // Die gesamte Gruppe so ausrichten, dass sie in Bewegungsrichtung zeigt,
-    // aber die Richtung so normalisieren, dass die Z-Achse nach vorne zeigt
-    const lookTarget = new THREE.Vector3().copy(position).add(direction);
-    juJishoGroup.lookAt(lookTarget);
+
+    // Berechne die horizontale Komponente der Bewegungsrichtung (ignoriere Y)
+    const horizontalDir = new THREE.Vector3(direction.x, 0, direction.z).normalize();
+    const angle = Math.atan2(horizontalDir.x, horizontalDir.z);
+    // Setze die Rotation so, dass nur um die Y-Achse gedreht wird
+    juJishoGroup.rotation.set(0, angle, 0);
+
     
     // Keine weitere Rotation hinzufügen - das X ist bereits diagonal durch die Beam-Rotationen
     // Entferne: juJishoGroup.rotateOnAxis(new THREE.Vector3(0, 0, 1), Math.PI / 4);
@@ -284,31 +337,28 @@ function createJuJishoTrail(position, rotation, color) {
     const trailCore = new THREE.Mesh(trailCoreGeometry, trailCoreMaterial);
     trailGroup.add(trailCore);
     
-    // Erster diagonaler Trail-Strahl
+    // Horizontaler Trail-Strahl (entlang der X-Achse)
     const trailBeam1 = new THREE.Mesh(
-        new THREE.BoxGeometry(0.1, 0.1, 1.2),
+        new THREE.BoxGeometry(1.2, 0.1, 0.1),
         new THREE.MeshBasicMaterial({
             color: color,
             transparent: true,
             opacity: 0.2
         })
     );
-    trailBeam1.rotation.x = Math.PI / 4;
-    trailBeam1.rotation.y = Math.PI / 4;
     trailGroup.add(trailBeam1);
-    
-    // Zweiter diagonaler Trail-Strahl
+
+    // Vertikaler Trail-Strahl (entlang der Y-Achse)
     const trailBeam2 = new THREE.Mesh(
-        new THREE.BoxGeometry(0.1, 0.1, 1.2),
+        new THREE.BoxGeometry(0.1, 1.2, 0.1),
         new THREE.MeshBasicMaterial({
             color: color,
             transparent: true,
             opacity: 0.2
         })
     );
-    trailBeam2.rotation.x = Math.PI / 4;
-    trailBeam2.rotation.y = -Math.PI / 4;
     trailGroup.add(trailBeam2);
+
     
     // Copy position and rotation
     trailGroup.position.copy(position);
