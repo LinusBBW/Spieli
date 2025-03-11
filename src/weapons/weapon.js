@@ -24,7 +24,8 @@ import {
     createMugetsu,
     createDarkAura,
     updateMugetsuAnimation,
-    animateMugetsu
+    animateMugetsu,
+    animateDarkAura
 } from './mugetsu.js';
 import { cubes } from '../entities/enemies.js';
 import { createDestroyEffect, activeFragments } from '../effects/particles.js';

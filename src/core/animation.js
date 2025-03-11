@@ -88,9 +88,13 @@ function animate(time) {
     // Update health system
     updateHealthSystem();
     
-    // Added dark aura/mugetsu animation
-    animateMugetsu(window.mugetsu, deltaTime);
-    animateDarkAura(window.darkAura, deltaTime);
+    // Safely animate Mugetsu and Dark Aura
+    if (window.mugetsu) {
+        animateMugetsu(window.mugetsu, deltaTime);
+    }
+    if (window.darkAura) {
+        animateDarkAura(window.darkAura, deltaTime);
+    }
     
     // Render the scene
     renderer.render(scene, camera);
