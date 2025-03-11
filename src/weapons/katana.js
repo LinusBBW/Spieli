@@ -560,7 +560,7 @@ function updateBankaiAnimation(specialProgress, katana, controls, originalCamera
             createScreenShake(0.2, 0.8); // Increased intensity from 0.15 to 0.2
             
             // Create petals (with increased count)
-            createSenbonzakuraEffect(katanaWorldPos, 7000); // Increased petal count
+            createSenbonzakuraEffect(katanaWorldPos, 2000); // Increased petal count
             
             // Add a large flash of light effect at the transformation point
             const flashGeometry = new THREE.SphereGeometry(1.5, 16, 16); // Larger flash (increased from 1.0 to 1.5)

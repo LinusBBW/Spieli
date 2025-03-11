@@ -10,7 +10,9 @@ import {
     wandSpecialDuration,
     wandSpecialMaxDuration,
     wandSpecialCooldown,
-    wandSpecialMaxCooldown
+    wandSpecialMaxCooldown,
+    zangetsuSpecialCooldown,
+    zangetsuSpecialMaxCooldown
 } from '../weapons/weapon.js';
 
 // UI display for dash cooldown
@@ -121,6 +123,33 @@ function createWandSpecialIndicator() {
     document.body.appendChild(wandSpecialIndicator);
 }
 
+// UI display for Zangetsu special move cooldown
+function createZangetsuSpecialIndicator() {
+    // Create a div element for the Zangetsu special indicator
+    const zangetsuSpecialIndicator = document.createElement('div');
+    zangetsuSpecialIndicator.id = 'zangetsuSpecialIndicator';
+    zangetsuSpecialIndicator.style.position = 'absolute';
+    zangetsuSpecialIndicator.style.bottom = '100px'; // Position below other indicators
+    zangetsuSpecialIndicator.style.left = '20px';
+    zangetsuSpecialIndicator.style.width = '100px';
+    zangetsuSpecialIndicator.style.height = '10px';
+    zangetsuSpecialIndicator.style.backgroundColor = '#333';
+    zangetsuSpecialIndicator.style.border = '2px solid #fff';
+    zangetsuSpecialIndicator.style.borderRadius = '5px';
+    zangetsuSpecialIndicator.style.overflow = 'hidden';
+    
+    // Inner div for the fill level
+    const zangetsuSpecialFill = document.createElement('div');
+    zangetsuSpecialFill.id = 'zangetsuSpecialFill';
+    zangetsuSpecialFill.style.width = '100%';
+    zangetsuSpecialFill.style.height = '100%';
+    zangetsuSpecialFill.style.backgroundColor = '#0066FF'; // Blue for Getsuga Tensho
+    zangetsuSpecialFill.style.transition = 'width 0.1s';
+    
+    zangetsuSpecialIndicator.appendChild(zangetsuSpecialFill);
+    document.body.appendChild(zangetsuSpecialIndicator);
+}
+
 // Update the dash indicator
 function updateDashIndicator() {
     const dashFill = document.getElementById('dashFill');
@@ -179,14 +208,29 @@ function updateWandSpecialIndicator() {
     }
 }
 
+// Update the Zangetsu special indicator
+function updateZangetsuSpecialIndicator() {
+    const zangetsuSpecialFill = document.getElementById('zangetsuSpecialFill');
+    if (zangetsuSpecialFill) {
+        if (zangetsuSpecialCooldown > 0) {
+            const fillPercentage = 100 - (zangetsuSpecialCooldown / zangetsuSpecialMaxCooldown) * 100;
+            zangetsuSpecialFill.style.width = fillPercentage + '%';
+        } else {
+            zangetsuSpecialFill.style.width = '100%';
+        }
+    }
+}
+
 // Export indicator functions
 export {
     createDashIndicator,
     createSwordSpecialIndicator,
     createSpecialIndicator,
     createWandSpecialIndicator,
+    createZangetsuSpecialIndicator,
     updateDashIndicator,
     updateSwordSpecialIndicator,
     updateSpecialIndicator,
-    updateWandSpecialIndicator
+    updateWandSpecialIndicator,
+    updateZangetsuSpecialIndicator
 };

@@ -19,7 +19,8 @@ import {
     createDashIndicator, 
     createSpecialIndicator, 
     createWandSpecialIndicator,
-    createSwordSpecialIndicator
+    createSwordSpecialIndicator,
+    createZangetsuSpecialIndicator
 } from './src/ui/indicators.js';
 import { createCrosshair } from './src/ui/crosshair.js';
 
@@ -48,6 +49,7 @@ function initGame() {
     createSwordSpecialIndicator();
     createSpecialIndicator();
     createWandSpecialIndicator();
+    createZangetsuSpecialIndicator();
     
     // Add renderer to the DOM
     document.body.appendChild(renderer.domElement);
