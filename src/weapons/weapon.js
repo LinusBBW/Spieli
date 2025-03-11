@@ -16,13 +16,15 @@ import {
 } from './wand.js';
 import { 
     createZangetsu, 
-    updateJuJishoAnimation 
+    updateJuJishoAnimation,
+    createJuJisho
 } from './zangetsu.js';
 import { cubes } from '../entities/enemies.js';
 import { createDestroyEffect, activeFragments } from '../effects/particles.js';
 import { createMagicEffect } from '../effects/particles.js';
 import { createEnergySlice, createScreenShake } from '../effects/animations.js';
 import { showBankaiCutScene } from './bankai-cutscene.js';
+import { showJuJishoCutScene } from './ju-jisho-cutscene.js';
 
 // Weapon state variables
 let activeWeapon = "sword"; // "sword", "katana", "wand", or "zangetsu"
@@ -270,20 +272,43 @@ function startWandSpecial() {
 
 // Start the Zangetsu special move (Ju Jisho)
 function startZangetsuSpecial(controls) {
-    isPerformingSpecial = true;
-    specialProgress = 0;
-    isZangetsuSpecialActive = true;
-    
-    // Save original camera rotation
-    originalCameraRotation = camera.rotation.y;
-    
-    // Temporarily disable controls during charging
+    // Disable controls immediately
     controls.enabled = false;
     
-    // Re-enable controls after a short delay
-    setTimeout(() => {
+    // Show the Ju Jisho cut scene
+    showJuJishoCutScene(() => {
+        // This callback runs after the cut scene starts to fade out
+        
+        // Starte den Spezialangriff sofort ohne weitere Verzögerung
+        isPerformingSpecial = true;
+        specialProgress = 0;
+        isZangetsuSpecialActive = true;
+        
+        // Save original camera rotation
+        originalCameraRotation = camera.rotation.y;
+        
+        // Re-enable controls immediately to verbessern responsiveness
         controls.enabled = true;
-    }, 600); // Re-enable during the release phase
+        
+        // Create a dramatic screen shake effect as the attack begins
+        createScreenShake(0.1, 0.9);
+        
+        // Wir könnten hier auch einen sofortigen Ju Jisho-Angriff starten
+        // für ein nahtloseres Erlebnis, indem wir direkt nach der Cutscene angreifen
+        const cameraDirection = new THREE.Vector3();
+        camera.getWorldDirection(cameraDirection);
+        
+        // Verzögere den Ju Jisho nur minimal, damit er direkt nach dem Fade-Out der Cutscene erscheint
+        setTimeout(() => {
+            // Positioniere den Ju Jisho direkt vor dem Spieler
+            const juJishoPosition = camera.position.clone().add(
+                cameraDirection.clone().multiplyScalar(2.5)
+            );
+            
+            // Erstelle den Ju Jisho-Angriff
+            createJuJisho(juJishoPosition, cameraDirection);
+        }, 100);
+    });
 }
 
 // Update weapon animations

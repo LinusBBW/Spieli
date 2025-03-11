@@ -5,6 +5,7 @@ import { createScreenShake } from '../effects/animations.js';
 import { createDestroyEffect } from '../effects/particles.js';
 import { cubes } from '../entities/enemies.js';
 import { activeFragments } from '../effects/particles.js';
+import { showJuJishoCutScene } from './ju-jisho-cutscene.js';
 
 // Create Zangetsu weapon
 function createZangetsu(camera) {
@@ -74,8 +75,8 @@ function createJuJisho(position, direction, color = 0xFFD700) { // Gold color
     // Gruppe für den gesamten Ju Jisho-Effekt
     const juJishoGroup = new THREE.Group();
     
-    // Zentraler Energieball - VERGRÖSSERT
-    const coreGeometry = new THREE.SphereGeometry(0.5, 16, 16); // Von 0.3 auf 0.5 vergrößert
+    // Zentraler Energieball
+    const coreGeometry = new THREE.SphereGeometry(0.5, 16, 16);
     const coreMaterial = new THREE.MeshBasicMaterial({
         color: 0xFFD700, // Gold
         transparent: true,
@@ -85,11 +86,11 @@ function createJuJisho(position, direction, color = 0xFFD700) { // Gold color
     const core = new THREE.Mesh(coreGeometry, coreMaterial);
     juJishoGroup.add(core);
     
-    // X-förmige Energiestrahlen erstellen - VERGRÖSSERT
-    const beamLength = 5.0; // Von 1.8 auf 3.0 vergrößert
-    const beamWidth = 0.5;  // Von 0.15 auf 0.25 vergrößert
+    // X-förmige Energiestrahlen erstellen
+    const beamLength = 5.0;
+    const beamWidth = 0.5;
     
-    // Energiestrahl 1 (von links oben nach rechts unten)
+    // Erster diagonaler Strahl (von links oben nach rechts unten)
     const beam1Geometry = new THREE.BoxGeometry(beamWidth, beamWidth, beamLength);
     const beam1Material = new THREE.MeshBasicMaterial({
         color: color,
@@ -98,11 +99,11 @@ function createJuJisho(position, direction, color = 0xFFD700) { // Gold color
     });
     
     const beam1 = new THREE.Mesh(beam1Geometry, beam1Material);
-    beam1.rotation.y = Math.PI / 4; // 45 Grad Drehung
-    beam1.rotation.x = Math.PI / 4; // 45 Grad nach unten/oben
+    beam1.rotation.x = Math.PI / 4; // 45 Grad Drehung um X-Achse
+    beam1.rotation.y = Math.PI / 4; // 45 Grad Drehung um Y-Achse
     juJishoGroup.add(beam1);
     
-    // Energiestrahl 2 (von links unten nach rechts oben)
+    // Zweiter diagonaler Strahl (von rechts oben nach links unten)
     const beam2Geometry = new THREE.BoxGeometry(beamWidth, beamWidth, beamLength);
     const beam2Material = new THREE.MeshBasicMaterial({
         color: color,
@@ -111,55 +112,12 @@ function createJuJisho(position, direction, color = 0xFFD700) { // Gold color
     });
     
     const beam2 = new THREE.Mesh(beam2Geometry, beam2Material);
-    beam2.rotation.y = Math.PI / 4; // 45 Grad Drehung
-    beam2.rotation.x = -Math.PI / 4; // -45 Grad nach oben/unten (entgegengesetzt zu beam1)
+    beam2.rotation.x = Math.PI / 4;  // 45 Grad Drehung um X-Achse
+    beam2.rotation.y = -Math.PI / 4; // -45 Grad Drehung um Y-Achse
     juJishoGroup.add(beam2);
     
-    // Zusätzliche "Spitzen" am Ende jedes Strahls für besseres X-Aussehen - VERGRÖSSERT
-    const tipSize = 0; // Von 0.25 auf 0.4 vergrößert
-    // Positionen der Spitzen - VERGRÖSSERT
-    const tipPositions = [
-        new THREE.Vector3(1.5, 1.5, 0),   // Oben rechts
-        new THREE.Vector3(-1.5, -1.5, 0), // Unten links
-        new THREE.Vector3(-1.5, 1.5, 0),  // Oben links
-        new THREE.Vector3(1.5, -1.5, 0)   // Unten rechts
-    ];
-    
-    for (let i = 0; i < tipPositions.length; i++) {
-        const tipGeometry = new THREE.ConeGeometry(tipSize, tipSize * 2, 8);
-        const tipMaterial = new THREE.MeshBasicMaterial({
-            color: color,
-            transparent: true,
-            opacity: 0.8
-        });
-        
-        const tip = new THREE.Mesh(tipGeometry, tipMaterial);
-        
-        // Position setzen
-        tip.position.copy(tipPositions[i]);
-        
-        // Ausrichtung anpassen
-        if (i < 2) {
-            // Die ersten beiden Tipps für beam1
-            tip.lookAt(new THREE.Vector3(
-                -tipPositions[i].x * 2,
-                -tipPositions[i].y * 2,
-                0
-            ));
-        } else {
-            // Die letzten beiden Tipps für beam2
-            tip.lookAt(new THREE.Vector3(
-                -tipPositions[i].x * 2,
-                -tipPositions[i].y * 2,
-                0
-            ));
-        }
-        
-        juJishoGroup.add(tip);
-    }
-    
-    // Äußeren Glüheffekt hinzufügen - VERGRÖSSERT
-    const glowGeometry = new THREE.SphereGeometry(0.8, 16, 16); // Von 0.5 auf 0.8 vergrößert
+    // Äußeren Glüheffekt hinzufügen
+    const glowGeometry = new THREE.SphereGeometry(0.8, 16, 16);
     const glowMaterial = new THREE.MeshBasicMaterial({
         color: 0xFFFFFF, // Weißes Glühen
         transparent: true,
@@ -172,12 +130,13 @@ function createJuJisho(position, direction, color = 0xFFD700) { // Gold color
     // Position and orient the Ju Jisho
     juJishoGroup.position.copy(position);
     
-    // Die gesamte Gruppe so ausrichten, dass sie in Bewegungsrichtung zeigt
+    // Die gesamte Gruppe so ausrichten, dass sie in Bewegungsrichtung zeigt,
+    // aber die Richtung so normalisieren, dass die Z-Achse nach vorne zeigt
     const lookTarget = new THREE.Vector3().copy(position).add(direction);
     juJishoGroup.lookAt(lookTarget);
     
-    // Um sicherzustellen, dass das X flach vor dem Spieler erscheint und nicht seitlich
-    juJishoGroup.rotateOnAxis(new THREE.Vector3(0, 0, 1), Math.PI / 4);
+    // Keine weitere Rotation hinzufügen - das X ist bereits diagonal durch die Beam-Rotationen
+    // Entferne: juJishoGroup.rotateOnAxis(new THREE.Vector3(0, 0, 1), Math.PI / 4);
     
     // Add to scene
     scene.add(juJishoGroup);
@@ -203,8 +162,6 @@ function createJuJisho(position, direction, color = 0xFFD700) { // Gold color
         
         // Move based on velocity
         this.position.add(this.userData.velocity);
-        
-        // ROTATION ENTFERNT - Keine Drehung mehr
         
         // Pulsate the core
         const pulse = 1.0 + Math.sin(now * 0.01) * 0.2;
@@ -259,33 +216,30 @@ function createJuJishoTrail(position, rotation, color) {
     const trailCore = new THREE.Mesh(trailCoreGeometry, trailCoreMaterial);
     trailGroup.add(trailCore);
     
-    // Vereinfachte X-Strahlen
-    const trailBeamGeometry = new THREE.BoxGeometry(0.1, 0.1, 1.2);
-    
-    // Erster Strahl
+    // Erster diagonaler Trail-Strahl
     const trailBeam1 = new THREE.Mesh(
-        trailBeamGeometry,
+        new THREE.BoxGeometry(0.1, 0.1, 1.2),
         new THREE.MeshBasicMaterial({
             color: color,
             transparent: true,
             opacity: 0.2
         })
     );
-    trailBeam1.rotation.y = Math.PI / 4;
     trailBeam1.rotation.x = Math.PI / 4;
+    trailBeam1.rotation.y = Math.PI / 4;
     trailGroup.add(trailBeam1);
     
-    // Zweiter Strahl
+    // Zweiter diagonaler Trail-Strahl
     const trailBeam2 = new THREE.Mesh(
-        trailBeamGeometry,
+        new THREE.BoxGeometry(0.1, 0.1, 1.2),
         new THREE.MeshBasicMaterial({
             color: color,
             transparent: true,
             opacity: 0.2
         })
     );
-    trailBeam2.rotation.y = Math.PI / 4;
-    trailBeam2.rotation.x = -Math.PI / 4;
+    trailBeam2.rotation.x = Math.PI / 4;
+    trailBeam2.rotation.y = -Math.PI / 4;
     trailGroup.add(trailBeam2);
     
     // Copy position and rotation
@@ -747,7 +701,9 @@ function updateJuJishoAnimation(specialProgress, zangetsu, controls, playerPosit
             0.3 * (1 - glowIntensity)    // Low blue for golden color
         );
         
-        // Create Ju Jisho at the moment of release
+        // ENTFERNT: Wir erstellen das Ju Jisho jetzt in startZangetsuSpecial
+        // Die folgende if-Abfrage wurde entfernt:
+        /*
         if (specialProgress > 0.35 && specialProgress < 0.36) {
             // Get position well in front of the player to ensure it flies forward properly
             const juJishoPosition = playerPosition.clone().add(
@@ -758,6 +714,12 @@ function updateJuJishoAnimation(specialProgress, zangetsu, controls, playerPosit
             createJuJisho(juJishoPosition, cameraDirection);
             
             // More dramatic screen shake
+            createScreenShake(0.2, 0.85);
+        }
+        */
+        
+        // Wir behalten aber den Screen Shake bei
+        if (specialProgress > 0.35 && specialProgress < 0.36) {
             createScreenShake(0.2, 0.85);
         }
     }
@@ -784,7 +746,6 @@ function updateJuJishoAnimation(specialProgress, zangetsu, controls, playerPosit
         );
     }
 }
-
 export {
     createZangetsu,
     updateJuJishoAnimation,
