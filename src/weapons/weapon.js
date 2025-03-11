@@ -22,10 +22,9 @@ import {
 } from './zangetsu.js';
 import {
     createMugetsu,
-    createBandagedArm,
+    createDarkAura,
     updateMugetsuAnimation,
-    animateMugetsu,
-    animateBandagedArm
+    animateMugetsu
 } from './mugetsu.js';
 import { cubes } from '../entities/enemies.js';
 import { createDestroyEffect, activeFragments } from '../effects/particles.js';
@@ -42,7 +41,7 @@ let swingProgress = 0;
 let canDestroy = false;
 
 // References to weapon objects
-let sword, katana, wand, zangetsu, tensaZangetsu, mugetsu, bandagedArm;
+let sword, katana, wand, zangetsu, tensaZangetsu, mugetsu, darkAura;
 
 // Original rotation for the sword (used for animations)
 let originalSwordRotation = {
@@ -63,9 +62,6 @@ let isSwordSpecialActive = false;
 let swordSpecialCooldown = 0;
 let swordSpecialMaxCooldown = 240; // 4 seconds at 60 FPS
 
-// Special move variables - Katana
-// (keeping existing variables)
-
 // Special move variables - Wand
 let isWandSpecialActive = false;
 let wandSpecialDuration = 0;
@@ -83,32 +79,6 @@ let zangetsuSpecialMaxCooldown = 180; // 3 seconds at 60 FPS
 let isMugetsuSpecialActive = false;
 let mugetsuSpecialCooldown = 0;
 let mugetsuSpecialMaxCooldown = 300; // 5 seconds at 60 FPS
-
-// Initialize weapons
-function initWeapons(camera, controls) {
-    // Create weapons and attach to camera
-    sword = createSword(camera);
-    katana = createKatana(camera);
-    wand = createWand(camera);
-    zangetsu = createZangetsu(camera);
-    tensaZangetsu = createTensaZangetsu(camera);
-    mugetsu = createMugetsu(camera);
-    bandagedArm = createBandagedArm(camera);
-    
-    // Show initial weapon
-    sword.visible = true;
-    katana.visible = false;
-    wand.visible = false;
-    zangetsu.visible = false;
-    tensaZangetsu.visible = false;
-    mugetsu.visible = false;
-    bandagedArm.visible = false; // Make sure bandaged arm is hidden initially
-    
-    // Set up event listeners
-    setupWeaponEventListeners(controls);
-    
-    console.log("Weapons initialized successfully!");
-}
 
 // Set up event listeners for weapon actions
 function setupWeaponEventListeners(controls) {
@@ -142,7 +112,33 @@ function setupWeaponEventListeners(controls) {
     }); 
 }
 
-// Cycle through weapons (sword -> katana -> wand -> zangetsu -> mugetsu -> sword)
+// Initialize weapons
+function initWeapons(camera, controls) {
+    // Create weapons and attach to camera
+    sword = createSword(camera);
+    katana = createKatana(camera);
+    wand = createWand(camera);
+    zangetsu = createZangetsu(camera);
+    tensaZangetsu = createTensaZangetsu(camera);
+    mugetsu = createMugetsu(camera);
+    darkAura = createDarkAura(camera);
+    
+    // Show initial weapon
+    sword.visible = true;
+    katana.visible = false;
+    wand.visible = false;
+    zangetsu.visible = false;
+    tensaZangetsu.visible = false;
+    mugetsu.visible = false;
+    darkAura.visible = false;
+    
+    // Set up event listeners
+    setupWeaponEventListeners(controls);
+    
+    console.log("Weapons initialized successfully!");
+}
+
+// Cycle through weapons
 function cycleWeapon() {
     if (activeWeapon === "sword") {
         activeWeapon = "katana";
@@ -152,7 +148,7 @@ function cycleWeapon() {
         zangetsu.visible = false;
         tensaZangetsu.visible = false;
         mugetsu.visible = false;
-        bandagedArm.visible = false;
+        darkAura.visible = false;
         console.log("Katana selected");
     } else if (activeWeapon === "katana") {
         activeWeapon = "wand";
@@ -162,7 +158,7 @@ function cycleWeapon() {
         zangetsu.visible = false;
         tensaZangetsu.visible = false;
         mugetsu.visible = false;
-        bandagedArm.visible = false;
+        darkAura.visible = false;
         console.log("Wand selected");
     } else if (activeWeapon === "wand") {
         activeWeapon = "zangetsu";
@@ -172,7 +168,7 @@ function cycleWeapon() {
         zangetsu.visible = true;
         tensaZangetsu.visible = true;
         mugetsu.visible = false;
-        bandagedArm.visible = false;
+        darkAura.visible = false;
         console.log("Zangetsu and Tensa Zangetsu selected");
     } else if (activeWeapon === "zangetsu") {
         activeWeapon = "mugetsu";
@@ -182,7 +178,7 @@ function cycleWeapon() {
         zangetsu.visible = false;
         tensaZangetsu.visible = false;
         mugetsu.visible = true;
-        bandagedArm.visible = false;
+        darkAura.visible = false;
         console.log("Mugetsu selected");
     } else {
         activeWeapon = "sword";
@@ -192,9 +188,176 @@ function cycleWeapon() {
         zangetsu.visible = false;
         tensaZangetsu.visible = false;
         mugetsu.visible = false;
-        bandagedArm.visible = false;
+        darkAura.visible = false;
         console.log("Sword selected");
     }
+}
+
+// Get the currently active weapon object
+function getActiveWeaponObject() {
+    if (activeWeapon === "sword") {
+        return sword;
+    } else if (activeWeapon === "katana") {
+        return katana;
+    } else if (activeWeapon === "wand") {
+        return wand;
+    } else if (activeWeapon === "zangetsu") {
+        return zangetsu;
+    } else {
+        return mugetsu;
+    }
+}
+
+// Activate special move for the current weapon
+function activateSpecialMove(controls) {
+    if (activeWeapon === "sword" && !isPerformingSpecial && swordSpecialCooldown <= 0) {
+        startSwordSpecial(controls);
+        console.log("Sword special move activated");
+    } else if (activeWeapon === "katana" && !isPerformingSpecial && specialCooldown <= 0) {
+        startKatanaSpecial(controls);
+        console.log("Katana special move activated");
+    } else if (activeWeapon === "wand" && !isWandSpecialActive && wandSpecialCooldown <= 0) {
+        startWandSpecial();
+        console.log("Wand special move activated");
+    } else if (activeWeapon === "zangetsu" && !isPerformingSpecial && zangetsuSpecialCooldown <= 0) {
+        startZangetsuSpecial(controls);
+        console.log("Zangetsu special move (Ju Jisho) activated");
+    } else if (activeWeapon === "mugetsu" && !isPerformingSpecial && mugetsuSpecialCooldown <= 0) {
+        startMugetsuSpecial(controls);
+        console.log("Mugetsu special move activated");
+    }
+}
+
+// Start swinging the weapon
+function swingWeapon() {
+    if (isSwinging) return; // Don't interrupt if already swinging
+    
+    isSwinging = true;
+    swingProgress = 0;
+    
+    // Store original rotation
+    originalSwordRotation = {
+        x: Math.PI / 6,
+        y: 0,
+        z: -Math.PI / 8
+    };
+    
+    console.log("Weapon swing started");
+}
+
+// Start the sword special move
+function startSwordSpecial(controls) {
+    isPerformingSpecial = true;
+    specialProgress = 0;
+    isSwordSpecialActive = true;
+    
+    // Save original camera rotation
+    originalCameraRotation = camera.rotation.y;
+    
+    // Temporarily disable controls (for first half of animation)
+    controls.enabled = false;
+    
+    // Apply screen shake for impact effect
+    setTimeout(() => {
+        createScreenShake(0.1, 0.85);
+        controls.enabled = true;
+    }, 800); // Timing for when sword hits ground
+}
+
+// Start the katana special move with dramatic cut scene
+function startKatanaSpecial(controls) {
+    // Disable controls immediately
+    controls.enabled = false;
+    
+    // Show the Bankai cut scene
+    showBankaiCutScene(() => {
+        // This callback runs after the cut scene finishes
+        
+        // Now start the actual special move
+        isPerformingSpecial = true;
+        specialProgress = 0;
+        
+        // Save original camera rotation
+        originalCameraRotation = camera.rotation.y;
+        
+        // Re-enable controls after another second
+        setTimeout(() => {
+            controls.enabled = true;
+        }, 1000);
+    });
+}
+
+// Start the wand special move
+function startWandSpecial() {
+    isWandSpecialActive = true;
+    wandSpecialDuration = wandSpecialMaxDuration;
+    
+    // Create the arkanorb
+    arkanorb = createArkanorb();
+}
+
+// Start the Zangetsu special move (Ju Jisho)
+function startZangetsuSpecial(controls) {
+    // Disable controls immediately
+    controls.enabled = false;
+    
+    // Show the Ju Jisho cut scene
+    showJuJishoCutScene(() => {
+        // This callback runs after the cut scene starts to fade out
+        
+        // Start the special attack immediately
+        isPerformingSpecial = true;
+        specialProgress = 0;
+        isZangetsuSpecialActive = true;
+        
+        // Save original camera rotation
+        originalCameraRotation = camera.rotation.y;
+        
+        // Re-enable controls immediately to improve responsiveness
+        controls.enabled = true;
+        
+        // Create a dramatic screen shake effect as the attack begins
+        createScreenShake(0.1, 0.9);
+        
+        // Create Ju Jisho immediately after the cutscene
+        const cameraDirection = new THREE.Vector3();
+        camera.getWorldDirection(cameraDirection);
+        
+        // Minimal delay to appear right after fade-out
+        setTimeout(() => {
+            // Position Ju Jisho in front of the player
+            const juJishoPosition = camera.position.clone().add(
+                cameraDirection.clone().multiplyScalar(2.5)
+            );
+            
+            // Create the Ju Jisho attack
+            createJuJisho(juJishoPosition, cameraDirection);
+        }, 100);
+    });
+}
+
+// Start the Mugetsu special move
+function startMugetsuSpecial(controls) {
+    // Disable controls immediately
+    controls.enabled = false;
+    
+    // Show the Mugetsu cut scene
+    showMugetsuCutScene(() => {
+        // This callback runs after the cut scene
+        
+        // Start the actual special move
+        isPerformingSpecial = true;
+        specialProgress = 0;
+        isMugetsuSpecialActive = true;
+        
+        // Save original camera rotation
+        originalCameraRotation = camera.rotation.y;
+        
+        // Re-enable controls after a short delay
+        setTimeout(() => {
+            controls.enabled = true;
+        }, 500);
+    });
 }
 
 // Update weapon animations
@@ -243,9 +406,9 @@ function updateWeaponAnimations() {
             // Call our enhanced animation function
             animateMugetsu(mugetsu, 1/60); // Assuming ~60fps
             
-            // Animate bandaged arm if visible
-            if (bandagedArm && bandagedArm.visible) {
-                animateBandagedArm(bandagedArm, 1/60);
+            // Animate dark aura if visible
+            if (darkAura && darkAura.visible) {
+                animateDarkAura(darkAura, 1/60);
             }
         }
         
@@ -408,51 +571,37 @@ function updateWeaponAnimations() {
     }
 }
 
-// Activate special move for the current weapon
-function activateSpecialMove(controls) {
-    if (activeWeapon === "sword" && !isPerformingSpecial && swordSpecialCooldown <= 0) {
-        startSwordSpecial(controls);
-        console.log("Sword special move activated");
-    } else if (activeWeapon === "katana" && !isPerformingSpecial && specialCooldown <= 0) {
-        startKatanaSpecial(controls);
-        console.log("Katana special move activated");
-    } else if (activeWeapon === "wand" && !isWandSpecialActive && wandSpecialCooldown <= 0) {
-        startWandSpecial();
-        console.log("Wand special move activated");
-    } else if (activeWeapon === "zangetsu" && !isPerformingSpecial && zangetsuSpecialCooldown <= 0) {
-        startZangetsuSpecial(controls);
-        console.log("Zangetsu special move (Ju Jisho) activated");
-    } else if (activeWeapon === "mugetsu" && !isPerformingSpecial && mugetsuSpecialCooldown <= 0) {
-        startMugetsuSpecial(controls);
-        console.log("Mugetsu special move activated");
+// Check if a cube is hit by the weapon
+function checkCubeHits() {
+    if (!canDestroy) return;
+    
+    // Create a raycaster from the camera position in the direction of view
+    raycaster.setFromCamera(mouse, camera);
+    
+    // Check if a cube is hit
+    const intersects = raycaster.intersectObjects(cubes);
+    
+    if (intersects.length > 0) {
+        // The nearest hit cube
+        const hitCube = intersects[0].object;
+        
+        // Remove the cube from the scene
+        scene.remove(hitCube);
+        
+        // Remove the cube from the list of cubes
+        const index = cubes.indexOf(hitCube);
+        if (index > -1) {
+            cubes.splice(index, 1);
+        }
+        
+        // Create a destruction effect at the position of the hit cube
+        createDestroyEffect(hitCube.position, hitCube.material.color);
+        
+        console.log("Cube destroyed!");
     }
 }
 
-// Start the Mugetsu special move
-function startMugetsuSpecial(controls) {
-    // Disable controls immediately
-    controls.enabled = false;
-    
-    // Show the Mugetsu cut scene
-    showMugetsuCutScene(() => {
-        // This callback runs after the cut scene
-        
-        // Start the actual special move
-        isPerformingSpecial = true;
-        specialProgress = 0;
-        isMugetsuSpecialActive = true;
-        
-        // Save original camera rotation
-        originalCameraRotation = camera.rotation.y;
-        
-        // Re-enable controls after a short delay
-        setTimeout(() => {
-            controls.enabled = true;
-        }, 500);
-    });
-}
-
-// Update special move effects and cooldowns
+// Update weapon specials
 function updateWeaponSpecials(controls) {
     // Update special move cooldowns
     if (specialCooldown > 0) {
@@ -493,7 +642,7 @@ function updateWeaponSpecials(controls) {
                 // Mugetsu Final Getsuga Tensho animation
                 const cameraDirection = new THREE.Vector3();
                 camera.getWorldDirection(cameraDirection);
-                updateMugetsuAnimation(specialProgress, mugetsu, bandagedArm, controls, camera.position.clone(), cameraDirection);
+                updateMugetsuAnimation(specialProgress, mugetsu, darkAura, controls, camera.position.clone(), cameraDirection);
             } else {
                 // Katana Bankai animation - Senbonzakura Kageyoshi
                 updateBankaiAnimation(specialProgress, katana, controls, originalCameraRotation, camera.position.clone());
@@ -529,7 +678,7 @@ function updateWeaponSpecials(controls) {
                 mugetsuSpecialCooldown = mugetsuSpecialMaxCooldown;
                 isMugetsuSpecialActive = false;
                 
-                // Reset mugetsu with gentle transition
+                // Reset mugetsu 
                 mugetsu.position.set(0.3, -0.2, -0.5);
                 mugetsu.rotation.x = Math.PI / 6;
                 mugetsu.rotation.z = -Math.PI / 8;
@@ -547,8 +696,8 @@ function updateWeaponSpecials(controls) {
                     }
                 }
                 
-                // Hide bandaged arm
-                bandagedArm.visible = false;
+                // Hide dark aura
+                darkAura.visible = false;
             } else {
                 specialCooldown = specialMaxCooldown;
                 
@@ -580,160 +729,6 @@ function updateWeaponSpecials(controls) {
             removeArkanorb(arkanorb);
             arkanorb = null;
         }
-    }
-}
-
-// Start swinging the weapon
-function swingWeapon() {
-    if (isSwinging) return; // Don't interrupt if already swinging
-    
-    isSwinging = true;
-    swingProgress = 0;
-    
-    // Store original rotation
-    originalSwordRotation = {
-        x: Math.PI / 6,
-        y: 0,
-        z: -Math.PI / 8
-    };
-    
-    console.log("Weapon swing started");
-}
-
-// Check if a cube is hit by the weapon
-function checkCubeHits() {
-    if (!canDestroy) return;
-    
-    // Create a raycaster from the camera position in the direction of view
-    raycaster.setFromCamera(mouse, camera);
-    
-    // Check if a cube is hit
-    const intersects = raycaster.intersectObjects(cubes);
-    
-    if (intersects.length > 0) {
-        // The nearest hit cube
-        const hitCube = intersects[0].object;
-        
-        // Remove the cube from the scene
-        scene.remove(hitCube);
-        
-        // Remove the cube from the list of cubes
-        const index = cubes.indexOf(hitCube);
-        if (index > -1) {
-            cubes.splice(index, 1);
-        }
-        
-        // Create a destruction effect at the position of the hit cube
-        createDestroyEffect(hitCube.position, hitCube.material.color);
-        
-        console.log("Cube destroyed!");
-    }
-}
-
-// Start the sword special move
-function startSwordSpecial(controls) {
-    isPerformingSpecial = true;
-    specialProgress = 0;
-    isSwordSpecialActive = true;
-    
-    // Save original camera rotation
-    originalCameraRotation = camera.rotation.y;
-    
-    // Temporarily disable controls (for first half of animation)
-    controls.enabled = false;
-    
-    // Apply screen shake for impact effect
-    setTimeout(() => {
-        createScreenShake(0.1, 0.85);
-        controls.enabled = true;
-    }, 800); // Timing for when sword hits ground
-}
-
-// Start the katana special move with dramatic cut scene
-function startKatanaSpecial(controls) {
-    // Disable controls immediately
-    controls.enabled = false;
-    
-    // Show the Bankai cut scene
-    showBankaiCutScene(() => {
-        // This callback runs after the cut scene finishes
-        
-        // Now start the actual special move
-        isPerformingSpecial = true;
-        specialProgress = 0;
-        
-        // Save original camera rotation
-        originalCameraRotation = camera.rotation.y;
-        
-        // Re-enable controls after another second
-        setTimeout(() => {
-            controls.enabled = true;
-        }, 1000);
-    });
-}
-
-// Start the wand special move
-function startWandSpecial() {
-    isWandSpecialActive = true;
-    wandSpecialDuration = wandSpecialMaxDuration;
-    
-    // Create the arkanorb
-    arkanorb = createArkanorb();
-}
-
-// Start the Zangetsu special move (Ju Jisho)
-function startZangetsuSpecial(controls) {
-    // Disable controls immediately
-    controls.enabled = false;
-    
-    // Show the Ju Jisho cut scene
-    showJuJishoCutScene(() => {
-        // This callback runs after the cut scene starts to fade out
-        
-        // Starte den Spezialangriff sofort ohne weitere Verzögerung
-        isPerformingSpecial = true;
-        specialProgress = 0;
-        isZangetsuSpecialActive = true;
-        
-        // Save original camera rotation
-        originalCameraRotation = camera.rotation.y;
-        
-        // Re-enable controls immediately to verbessern responsiveness
-        controls.enabled = true;
-        
-        // Create a dramatic screen shake effect as the attack begins
-        createScreenShake(0.1, 0.9);
-        
-        // Wir könnten hier auch einen sofortigen Ju Jisho-Angriff starten
-        // für ein nahtloseres Erlebnis, indem wir direkt nach der Cutscene angreifen
-        const cameraDirection = new THREE.Vector3();
-        camera.getWorldDirection(cameraDirection);
-        
-        // Verzögere den Ju Jisho nur minimal, damit er direkt nach dem Fade-Out der Cutscene erscheint
-        setTimeout(() => {
-            // Positioniere den Ju Jisho direkt vor dem Spieler
-            const juJishoPosition = camera.position.clone().add(
-                cameraDirection.clone().multiplyScalar(2.5)
-            );
-            
-            // Erstelle den Ju Jisho-Angriff
-            createJuJisho(juJishoPosition, cameraDirection);
-        }, 100);
-    });
-}
-
-// Get the currently active weapon object
-function getActiveWeaponObject() {
-    if (activeWeapon === "sword") {
-        return sword;
-    } else if (activeWeapon === "katana") {
-        return katana;
-    } else if (activeWeapon === "wand") {
-        return wand;
-    } else if (activeWeapon === "zangetsu") {
-        return zangetsu;
-    } else {
-        return mugetsu;
     }
 }
 

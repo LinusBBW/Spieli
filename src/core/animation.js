@@ -25,7 +25,7 @@ import { updateFeet } from '../entities/player.js';
 import { updateCubes } from '../entities/enemies.js';
 import { updateParticles } from '../effects/particles.js';
 import { createDashEffect } from '../effects/particles.js';
-import { animateMugetsu, animateBandagedArm } from '../weapons/mugetsu.js';
+import { animateMugetsu, animateDarkAura } from '../weapons/mugetsu.js';
 
 // Store animation frame ID for potential cancellation
 let animationFrameId;
@@ -87,6 +87,10 @@ function animate(time) {
     
     // Update health system
     updateHealthSystem();
+    
+    // Added dark aura/mugetsu animation
+    animateMugetsu(window.mugetsu, deltaTime);
+    animateDarkAura(window.darkAura, deltaTime);
     
     // Render the scene
     renderer.render(scene, camera);

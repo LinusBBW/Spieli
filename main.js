@@ -25,6 +25,12 @@ import {
 } from './src/ui/indicators.js';
 import { createCrosshair } from './src/ui/crosshair.js';
 
+// Import weapon modules
+import { 
+    createMugetsu, 
+    createDarkAura 
+} from './src/weapons/mugetsu.js';  // Add this import
+
 // Initialize the game
 function initGame() {
     // Setup the scene, renderer, and camera
@@ -40,6 +46,13 @@ function initGame() {
     const player = createPlayer(camera, controls);
     initWeapons(camera, controls);
     
+    const mugetsu = createMugetsu(camera);
+    const darkAura = createDarkAura(camera);
+
+    // Expose these globally if needed
+    window.mugetsu = mugetsu;
+    window.darkAura = darkAura;
+
     // Create enemy cubes
     const cubes = setupCubes();
     
