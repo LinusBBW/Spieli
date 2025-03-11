@@ -7,50 +7,49 @@ import { cubes } from '../entities/enemies.js';
 import { activeFragments } from '../effects/particles.js';
 import { showMugetsuCutScene } from './mugetsu-cutscene.js';
 
-// Create Mugetsu weapon
 function createMugetsu(camera) {
-    // Group for the Mugetsu
+    // Gruppe für die Mugetsu-Waffe
     const mugetsu = new THREE.Group();
     
-    // Create a more authentic blade - longer, slightly curved, and pure black
+    // Erstelle eine authentischere Klinge – länger, leicht gekrümmt und rein schwarz
     const points = [];
-    // Create curve for katana blade
     for (let i = 0; i < 10; i++) {
         const t = i / 9;
-        // Add slight curve to the blade's shape
         points.push(new THREE.Vector3(
-            0.03 * Math.sin(t * Math.PI), // Slight curve
-            t * 1.2 - 0.6,               // Length is now 1.2 instead of 0.9
+            0.03 * Math.sin(t * Math.PI), // leichte Krümmung
+            t * 1.2 - 0.6,                // Länge: 1.2 statt 0.9
             0
         ));
     }
     
-    // Create blade using curve
+    // Erzeuge die Klingen-Geometrie mittels LatheGeometry
     const bladeGeometry = new THREE.LatheGeometry(
         points, 
-        12,      // Segments around
-        0,       // Start angle
-        Math.PI * 0.3  // Blade is a partial rotation
+        12,             // Segmente um die Achse
+        0,              // Startwinkel
+        Math.PI * 0.3   // Teilrotation – Klinge ist nur ein Abschnitt
     );
     
     const bladeMaterial = new THREE.MeshBasicMaterial({ 
-        color: 0x000000,  // Pure black
+        color: 0x000000,  // Reines Schwarz
         side: THREE.DoubleSide
     });
     
     const blade = new THREE.Mesh(bladeGeometry, bladeMaterial);
-    blade.rotation.z = Math.PI / 2; // Orient properly
+    // Rotiere die Klinge um Z, sodass sie entlang der X-Achse verläuft
+    blade.rotation.z = Math.PI / 2;
+    // Dadurch zeigt der untere Rand (ursprünglich bei y = -0.6) nun in X-Richtung (ca. x = 0.6)
     
-    // Multiple layers of red glow for more dramatic effect
+    // Erzeuge mehrere rote Glüh-Ebenen für dramatischen Effekt
     const glowCount = 3;
     for (let i = 0; i < glowCount; i++) {
-        const scale = 1.1 + (i * 0.1); // Each layer is larger
+        const scale = 1.1 + (i * 0.1);
         const glowGeometry = new THREE.LatheGeometry(
             points.map(p => new THREE.Vector3(p.x * scale, p.y, p.z * scale)), 
             12, 0, Math.PI * 0.3
         );
         
-        const opacity = 0.2 - (i * 0.05); // Each layer is more transparent
+        const opacity = 0.2 - (i * 0.05);
         const glowMaterial = new THREE.MeshBasicMaterial({
             color: 0xFF0000,
             transparent: true,
@@ -61,7 +60,7 @@ function createMugetsu(camera) {
         const glow = new THREE.Mesh(glowGeometry, glowMaterial);
         glow.rotation.z = Math.PI / 2;
         
-        // Add userData for animation
+        // Speichere Animationsparameter in userData (wird z. B. in animateMugetsu genutzt)
         glow.userData = {
             pulseRate: 0.003 + (i * 0.001),
             baseOpacity: opacity
@@ -70,146 +69,57 @@ function createMugetsu(camera) {
         mugetsu.add(glow);
     }
     
-    // Simple handle - black with dark red accents
+    // Erstelle den Handle (Griff) – Standardmäßig liegt der Zylinder entlang der Y-Achse
     const handleGeometry = new THREE.CylinderGeometry(0.02, 0.025, 0.35, 16);
     const handleMaterial = new THREE.MeshBasicMaterial({ 
-        color: 0x111111  // Dark base for handle
+        color: 0x111111  // Dunkles Grau
     });
     const handle = new THREE.Mesh(handleGeometry, handleMaterial);
-    handle.position.y = -0.9; // Lower due to longer blade
-    handle.rotation.x = Math.PI / 2; // Orient horizontally
+    // Damit der Griff entlang der X-Achse verläuft, rotiere ihn um -90° um die Z-Achse:
+    handle.rotation.z = -Math.PI / 2;
+    // Positioniere den Handle so, dass er an der Basis der Klinge ansetzt:
+    // Die Basis der Klinge (unterer Rand) liegt bei ca. x = 0.6. Der Griff hat eine Länge von 0.35, 
+    // sein Mittelpunkt sollte also bei 0.6 + 0.35/2 = 0.775 liegen.
+    handle.position.set(0.775, 0, 0);
     
-    // Add some accent rings on the handle
+    // Füge Akzent-Ringe zum Handle hinzu – ebenfalls entlang der X-Achse positioniert.
     const ringCount = 5;
     for (let i = 0; i < ringCount; i++) {
         const ringGeometry = new THREE.TorusGeometry(0.022, 0.004, 8, 16);
         const ringMaterial = new THREE.MeshBasicMaterial({
-            color: 0x3A0000, // Dark red
+            color: 0x3A0000, // Dunkelrot
             transparent: true,
             opacity: 0.9
         });
         
         const ring = new THREE.Mesh(ringGeometry, ringMaterial);
-        ring.position.y = -0.9 + (i / (ringCount-1)) * 0.3 - 0.15; // Distribute along handle
-        ring.rotation.x = Math.PI / 2; // Orient to wrap around handle
+        // Positioniere die Ringe entlang der X-Achse, beginnend ab ca. x = 0.6,
+        // verteilt über einen Bereich von ca. 0.3 Einheiten (Offset -0.15 zur feinen Abstimmung)
+        ring.position.x = 0.6 + (i / (ringCount - 1)) * 0.3 - 0.15;
+        // Rotiere den Ring, damit er den Griff umschließt (Rotation um Y-Achse)
+        ring.rotation.y = Math.PI / 2;
         
         mugetsu.add(ring);
     }
     
-    // Create aura particles around the blade
-    const particleCount = 30;
-    for (let i = 0; i < particleCount; i++) {
-        const size = 0.01 + Math.random() * 0.03;
-        
-        // Use various geometries for particles
-        let particleGeometry;
-        const shapeType = Math.floor(Math.random() * 3);
-        
-        if (shapeType === 0) {
-            particleGeometry = new THREE.BoxGeometry(size, size, size);
-        } else if (shapeType === 1) {
-            particleGeometry = new THREE.TetrahedronGeometry(size);
-        } else {
-            particleGeometry = new THREE.SphereGeometry(size, 4, 4);
-        }
-        
-        // Alternate between black and red particles
-        const particleColor = Math.random() > 0.6 ? 0xFF0000 : 0x000000;
-        
-        const particleMaterial = new THREE.MeshBasicMaterial({
-            color: particleColor,
-            transparent: true,
-            opacity: 0.3 + Math.random() * 0.5
-        });
-        
-        const particle = new THREE.Mesh(particleGeometry, particleMaterial);
-        
-        // Position randomly around the blade
-        const yPos = Math.random() * 1.2 - 0.6; // Along blade length
-        const angle = Math.random() * Math.PI * 2;
-        const radius = 0.05 + Math.random() * 0.1;
-        
-        particle.position.set(
-            Math.cos(angle) * radius,
-            yPos,
-            Math.sin(angle) * radius
-        );
-        
-        // Add properties for animation
-        particle.userData = {
-            initialY: yPos,
-            angle: angle,
-            radius: radius,
-            speed: 0.01 + Math.random() * 0.02,
-            rotationSpeed: 0.02 + Math.random() * 0.04,
-            pulseSpeed: 0.01 + Math.random() * 0.03
-        };
-        
-        mugetsu.add(particle);
-    }
-    
-    // Create dark energy strands (instead of bandages)
-    const strandCount = 5;
-    for (let i = 0; i < strandCount; i++) {
-        // Create a flowing dark energy strand
-        const strandPoints = [];
-        const strandLength = 0.2 + Math.random() * 0.2;
-        const segments = 10;
-        
-        for (let j = 0; j < segments; j++) {
-            const t = j / (segments-1);
-            const curveAmount = Math.sin(t * Math.PI) * 0.05;
-            
-            strandPoints.push(
-                new THREE.Vector3(
-                    curveAmount * Math.sin(t * Math.PI * 2),
-                    -0.9 - 0.1 - t * strandLength, // Start from bottom of handle
-                    curveAmount * Math.cos(t * Math.PI * 2)
-                )
-            );
-        }
-        
-        const curve = new THREE.CatmullRomCurve3(strandPoints);
-        const strandGeometry = new THREE.TubeGeometry(curve, 20, 0.005, 8, false);
-        const strandMaterial = new THREE.MeshBasicMaterial({
-            color: 0x000000, // Black energy
-            transparent: true,
-            opacity: 0.8
-        });
-        
-        const strand = new THREE.Mesh(strandGeometry, strandMaterial);
-        
-        // Random rotation around the handle
-        const angle = (i / strandCount) * Math.PI * 2;
-        strand.position.x = Math.cos(angle) * 0.02;
-        strand.position.z = Math.sin(angle) * 0.02;
-        
-        strand.userData = {
-            waveFactor: 0.001 + Math.random() * 0.002,
-            waveAmplitude: 0.02 + Math.random() * 0.03,
-            phase: Math.random() * Math.PI * 2
-        };
-        
-        mugetsu.add(strand);
-    }
-    
-    // Add blade to the group
+    // Füge Klinge und Handle zur Gruppe hinzu
     mugetsu.add(blade);
     mugetsu.add(handle);
     
-    // Position the weapon
+    // (Optional: Weitere Elemente wie Partikel, dunkle Energie-Stränge etc. hier hinzufügen)
+    
+    // Positioniere die gesamte Waffe in der Szene
     mugetsu.position.set(0.3, -0.2, -0.5);
     mugetsu.rotation.x = Math.PI / 6;
     mugetsu.rotation.z = -Math.PI / 8;
     
-    // Add to camera
+    // Hänge die Waffe an die Kamera und verstecke sie standardmäßig
     camera.add(mugetsu);
-    
-    // Hide by default
     mugetsu.visible = false;
     
     return mugetsu;
 }
+
 
 // Create dark energy aura (instead of bandaged arm)
 function createDarkAura(camera) {
@@ -351,57 +261,43 @@ function createDarkAura(camera) {
     return auraGroup;
 }
 
-// Add animation function for the Mugetsu weapon
 function animateMugetsu(mugetsu, deltaTime) {
     if (!mugetsu || !mugetsu.visible) return;
     
-    // Animate the glowing layers (skipping blade and handle)
+    // Gehe alle Kinder der Mugetsu-Gruppe durch und animiere nur diejenigen,
+    // die spezifische Animationsparameter in userData besitzen.
     for (let i = 0; i < mugetsu.children.length; i++) {
         const child = mugetsu.children[i];
         
-        // Skip blade and handle
-        if (i < 2) continue;
-        
-        // Animate glow layers
+        // Falls das Kind einen Glow-Layer darstellt
         if (child.userData && child.userData.baseOpacity !== undefined) {
-            // Pulsing glow effect
             const pulse = Math.sin(Date.now() * child.userData.pulseRate) * 0.3 + 0.7;
             child.material.opacity = child.userData.baseOpacity * pulse;
         }
-        
-        // Animate particles
+        // Falls es sich um ein Partikel handelt (z. B. Energiepartikel)
         else if (child.userData && child.userData.initialY !== undefined) {
-            // Orbit around blade
             child.userData.angle += child.userData.speed;
-            
-            // Update position with some up/down movement
             child.position.set(
                 Math.cos(child.userData.angle) * child.userData.radius,
                 child.userData.initialY + Math.sin(Date.now() * child.userData.pulseSpeed) * 0.05,
                 Math.sin(child.userData.angle) * child.userData.radius
             );
-            
-            // Rotate particle
             child.rotation.x += child.userData.rotationSpeed;
             child.rotation.y += child.userData.rotationSpeed;
-            
-            // Pulse opacity
             const opacityPulse = Math.sin(Date.now() * 0.002 + i) * 0.3 + 0.7;
             child.material.opacity = (0.3 + Math.random() * 0.3) * opacityPulse;
         }
-        
-        // Animate dark energy strands
+        // Falls es sich um einen dark energy Strand handelt
         else if (child.userData && child.userData.waveFactor !== undefined) {
-            // Wave motion
             const time = Date.now() * child.userData.waveFactor;
             const wave = Math.sin(time + child.userData.phase) * child.userData.waveAmplitude;
-            
-            // Apply subtle rotation to make it wave
             child.rotation.x = wave * 0.5;
             child.rotation.z = wave * 0.3;
         }
+        // Kinder ohne spezifische Animationsparameter (z. B. Blade, Handle, Ringe) werden übersprungen.
     }
 }
+
 
 // Update dark aura animation
 function animateDarkAura(aura, deltaTime) {
