@@ -4,7 +4,7 @@ import { scene } from '../core/scene.js';
 
 // Create floor
 function createFloor() {
-    const floorGeometry = new THREE.PlaneGeometry(30, 30, 10, 10);
+    const floorGeometry = new THREE.PlaneGeometry(100, 100, 20, 20);
     // Simple material instead of texture
     const floorMaterial = new THREE.MeshBasicMaterial({ 
         color: 0x444444,  // Dark gray
@@ -31,7 +31,7 @@ function createWalls() {
     
     // Wall dimensions
     const wallHeight = 5;
-    const roomSize = 15;
+    const roomSize = 80;
     
     // Create four walls
     const wallGeometry1 = new THREE.PlaneGeometry(roomSize, wallHeight);

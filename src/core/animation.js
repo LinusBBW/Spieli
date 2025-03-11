@@ -13,7 +13,8 @@ import {
     updateSpecialIndicator, 
     updateWandSpecialIndicator,
     updateSwordSpecialIndicator,
-    updateZangetsuSpecialIndicator
+    updateZangetsuSpecialIndicator,
+    updateMugetsuSpecialIndicator
 } from '../ui/indicators.js';
 import { 
     updateWeaponAnimations, 
@@ -73,6 +74,7 @@ function animate() {
     updateSpecialIndicator();
     updateWandSpecialIndicator();
     updateZangetsuSpecialIndicator();
+    updateMugetsuSpecialIndicator();
     
     // Update health system
     updateHealthSystem();

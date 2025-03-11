@@ -20,21 +20,27 @@ import {
     updateJuJishoAnimation,
     createJuJisho
 } from './zangetsu.js';
+import {
+    createMugetsu,
+    createBandagedArm,
+    updateMugetsuAnimation
+} from './mugetsu.js';
 import { cubes } from '../entities/enemies.js';
 import { createDestroyEffect, activeFragments } from '../effects/particles.js';
 import { createMagicEffect } from '../effects/particles.js';
 import { createEnergySlice, createScreenShake } from '../effects/animations.js';
 import { showBankaiCutScene } from './bankai-cutscene.js';
 import { showJuJishoCutScene } from './ju-jisho-cutscene.js';
+import { showMugetsuCutScene } from './mugetsu-cutscene.js';
 
 // Weapon state variables
-let activeWeapon = "sword"; // "sword", "katana", "wand", or "zangetsu"
+let activeWeapon = "sword"; // "sword", "katana", "wand", "zangetsu", or "mugetsu"
 let isSwinging = false;
 let swingProgress = 0;
 let canDestroy = false;
 
 // References to weapon objects
-let sword, katana, wand, zangetsu, tensaZangetsu;
+let sword, katana, wand, zangetsu, tensaZangetsu, mugetsu, bandagedArm;
 
 // Original rotation for the sword (used for animations)
 let originalSwordRotation = {
@@ -71,6 +77,11 @@ let isZangetsuSpecialActive = false;
 let zangetsuSpecialCooldown = 0;
 let zangetsuSpecialMaxCooldown = 180; // 3 seconds at 60 FPS
 
+// Special move variables - Mugetsu
+let isMugetsuSpecialActive = false;
+let mugetsuSpecialCooldown = 0;
+let mugetsuSpecialMaxCooldown = 300; // 5 seconds at 60 FPS
+
 // Initialize weapons
 function initWeapons(camera, controls) {
     // Create weapons and attach to camera
@@ -79,6 +90,8 @@ function initWeapons(camera, controls) {
     wand = createWand(camera);
     zangetsu = createZangetsu(camera);
     tensaZangetsu = createTensaZangetsu(camera);
+    mugetsu = createMugetsu(camera);
+    bandagedArm = createBandagedArm(camera);
     
     // Show initial weapon
     sword.visible = true;
@@ -86,11 +99,12 @@ function initWeapons(camera, controls) {
     wand.visible = false;
     zangetsu.visible = false;
     tensaZangetsu.visible = false;
+    mugetsu.visible = false;
     
     // Set up event listeners
     setupWeaponEventListeners(controls);
     
-    console.log("Weapons initialized");
+    console.log("Weapons initialized successfully!");
 }
 
 // Set up event listeners for weapon actions
@@ -125,7 +139,7 @@ function setupWeaponEventListeners(controls) {
     }); 
 }
 
-// Cycle through weapons (sword -> katana -> wand -> zangetsu with Tensa -> sword)
+// Cycle through weapons (sword -> katana -> wand -> zangetsu -> mugetsu -> sword)
 function cycleWeapon() {
     if (activeWeapon === "sword") {
         activeWeapon = "katana";
@@ -134,6 +148,7 @@ function cycleWeapon() {
         wand.visible = false;
         zangetsu.visible = false;
         tensaZangetsu.visible = false;
+        mugetsu.visible = false;
         console.log("Katana selected");
     } else if (activeWeapon === "katana") {
         activeWeapon = "wand";
@@ -142,6 +157,7 @@ function cycleWeapon() {
         wand.visible = true;
         zangetsu.visible = false;
         tensaZangetsu.visible = false;
+        mugetsu.visible = false;
         console.log("Wand selected");
     } else if (activeWeapon === "wand") {
         activeWeapon = "zangetsu";
@@ -150,7 +166,17 @@ function cycleWeapon() {
         wand.visible = false;
         zangetsu.visible = true;
         tensaZangetsu.visible = true;
+        mugetsu.visible = false;
         console.log("Zangetsu and Tensa Zangetsu selected");
+    } else if (activeWeapon === "zangetsu") {
+        activeWeapon = "mugetsu";
+        sword.visible = false;
+        katana.visible = false;
+        wand.visible = false;
+        zangetsu.visible = false;
+        tensaZangetsu.visible = false;
+        mugetsu.visible = true;
+        console.log("Mugetsu selected");
     } else {
         activeWeapon = "sword";
         sword.visible = true;
@@ -158,6 +184,7 @@ function cycleWeapon() {
         wand.visible = false;
         zangetsu.visible = false;
         tensaZangetsu.visible = false;
+        mugetsu.visible = false;
         console.log("Sword selected");
     }
 }
@@ -176,6 +203,9 @@ function activateSpecialMove(controls) {
     } else if (activeWeapon === "zangetsu" && !isPerformingSpecial && zangetsuSpecialCooldown <= 0) {
         startZangetsuSpecial(controls);
         console.log("Zangetsu special move (Ju Jisho) activated");
+    } else if (activeWeapon === "mugetsu" && !isPerformingSpecial && mugetsuSpecialCooldown <= 0) {
+        startMugetsuSpecial(controls);
+        console.log("Mugetsu special move activated");
     }
 }
 
@@ -318,6 +348,30 @@ function startZangetsuSpecial(controls) {
     });
 }
 
+// Start the Mugetsu special move
+function startMugetsuSpecial(controls) {
+    // Disable controls immediately
+    controls.enabled = false;
+    
+    // Show the Mugetsu cut scene
+    showMugetsuCutScene(() => {
+        // This callback runs after the cut scene
+        
+        // Start the actual special move
+        isPerformingSpecial = true;
+        specialProgress = 0;
+        isMugetsuSpecialActive = true;
+        
+        // Save original camera rotation
+        originalCameraRotation = camera.rotation.y;
+        
+        // Re-enable controls after a short delay
+        setTimeout(() => {
+            controls.enabled = true;
+        }, 500);
+    });
+}
+
 // Update weapon animations
 function updateWeaponAnimations() {
     const activeWeaponObj = getActiveWeaponObject();
@@ -356,6 +410,15 @@ function updateWeaponAnimations() {
             // Zangetsu has a more deliberate, weighty hover
             zangetsu.position.y = -0.2 + Math.sin(Date.now() * 0.002) * 0.01;
             zangetsu.rotation.z = originalSwordRotation.z + Math.sin(Date.now() * 0.001) * 0.03;
+        } else if (activeWeapon === "mugetsu") {
+            // Mugetsu has a subtle, ominous hover
+            mugetsu.position.y = -0.2 + Math.sin(Date.now() * 0.002) * 0.01;
+            mugetsu.rotation.z = originalSwordRotation.z + Math.sin(Date.now() * 0.001) * 0.02;
+            
+            // Subtle pulse for the red glow
+            const redGlow = mugetsu.children[2]; // The red glow is the third child
+            const glowFactor = (Math.sin(Date.now() * 0.003) + 1) / 2; // Value between 0 and 1
+            redGlow.material.opacity = 0.1 + glowFactor * 0.1;
         }
         canDestroy = false; // Can't destroy when not swinging
     } else {
@@ -377,7 +440,7 @@ function updateWeaponAnimations() {
                     crystal.scale.set(1 + t * 0.5, 1 + t * 0.5, 1 + t * 0.5);
                     crystal.material.color.setHSL(0.6, 0.8, 0.5 + t * 0.5);
                 } else {
-                    // Standard sword/katana/zangetsu animation
+                    // Standard sword/katana/zangetsu/mugetsu animation
                     activeWeaponObj.rotation.x = originalSwordRotation.x - (Math.PI / 4) * t;
                     activeWeaponObj.rotation.z = originalSwordRotation.z - (Math.PI / 6) * t;
                 }
@@ -412,7 +475,7 @@ function updateWeaponAnimations() {
                     crystal.scale.set(pulse, pulse, pulse);
                     crystal.material.color.setHSL(0.6 - t * 0.1, 0.9, 0.7);
                 } else {
-                    // Standard sword/katana/zangetsu animation
+                    // Standard sword/katana/zangetsu/mugetsu animation
                     activeWeaponObj.rotation.x = originalSwordRotation.x - Math.PI / 4 + (Math.PI / 2) * t;
                     activeWeaponObj.rotation.z = originalSwordRotation.z - Math.PI / 6 + (Math.PI / 3) * t;
                 }
@@ -438,7 +501,7 @@ function updateWeaponAnimations() {
                     crystal.scale.set(1.3 - t * 0.3, 1.3 - t * 0.3, 1.3 - t * 0.3);
                     crystal.material.color.setHSL(0.5, 0.8, 0.7 - t * 0.2);
                 } else {
-                    // Standard sword/katana/zangetsu animation
+                    // Standard sword/katana/zangetsu/mugetsu animation
                     activeWeaponObj.rotation.x = originalSwordRotation.x + Math.PI / 4 - (Math.PI / 4) * t;
                     activeWeaponObj.rotation.z = originalSwordRotation.z + Math.PI / 6 - (Math.PI / 6) * t;
                 }
@@ -456,6 +519,9 @@ function updateWeaponAnimations() {
             } else if (activeWeapon === "zangetsu") {
                 zangetsu.rotation.x = originalSwordRotation.x;
                 zangetsu.rotation.z = originalSwordRotation.z;
+            } else if (activeWeapon === "mugetsu") {
+                mugetsu.rotation.x = originalSwordRotation.x;
+                mugetsu.rotation.z = originalSwordRotation.z;
             } else {
                 // Reset wand
                 wand.rotation.y = Math.PI / 10;
@@ -490,6 +556,10 @@ function updateWeaponSpecials(controls) {
         zangetsuSpecialCooldown--;
     }
     
+    if (mugetsuSpecialCooldown > 0) {
+        mugetsuSpecialCooldown--;
+    }
+    
     // Special move animations based on active weapon
     if (isPerformingSpecial) {
         // Update the special progress
@@ -504,6 +574,11 @@ function updateWeaponSpecials(controls) {
                 const cameraDirection = new THREE.Vector3();
                 camera.getWorldDirection(cameraDirection);
                 updateJuJishoAnimation(specialProgress, zangetsu, controls, camera.position.clone(), cameraDirection);
+            } else if (isMugetsuSpecialActive) {
+                // Mugetsu Final Getsuga Tensho animation
+                const cameraDirection = new THREE.Vector3();
+                camera.getWorldDirection(cameraDirection);
+                updateMugetsuAnimation(specialProgress, mugetsu, bandagedArm, controls, camera.position.clone(), cameraDirection);
             } else {
                 // Katana Bankai animation - Senbonzakura Kageyoshi
                 updateBankaiAnimation(specialProgress, katana, controls, originalCameraRotation, camera.position.clone());
@@ -535,6 +610,18 @@ function updateWeaponSpecials(controls) {
                 zangetsu.rotation.z = -Math.PI / 8;
                 zangetsu.rotation.y = 0;
                 zangetsu.children[1].material.color.setRGB(0.67, 0.67, 0.67); // Reset blade color
+            } else if (isMugetsuSpecialActive) {
+                mugetsuSpecialCooldown = mugetsuSpecialMaxCooldown;
+                isMugetsuSpecialActive = false;
+                
+                // Reset mugetsu
+                mugetsu.position.set(0.3, -0.2, -0.5);
+                mugetsu.rotation.x = Math.PI / 6;
+                mugetsu.rotation.z = -Math.PI / 8;
+                mugetsu.children[0].material.color.setRGB(0, 0, 0); // Keep blade black
+                
+                // Hide bandaged arm
+                bandagedArm.visible = false;
             } else {
                 specialCooldown = specialMaxCooldown;
                 
@@ -577,8 +664,10 @@ function getActiveWeaponObject() {
         return katana;
     } else if (activeWeapon === "wand") {
         return wand;
-    } else {
+    } else if (activeWeapon === "zangetsu") {
         return zangetsu;
+    } else {
+        return mugetsu;
     }
 }
 
@@ -603,5 +692,8 @@ export {
     swordSpecialMaxCooldown,
     zangetsuSpecialCooldown,
     zangetsuSpecialMaxCooldown,
-    isZangetsuSpecialActive
+    isZangetsuSpecialActive,
+    isMugetsuSpecialActive,
+    mugetsuSpecialCooldown,
+    mugetsuSpecialMaxCooldown
 };

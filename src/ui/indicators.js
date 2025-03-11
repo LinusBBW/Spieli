@@ -12,7 +12,9 @@ import {
     wandSpecialCooldown,
     wandSpecialMaxCooldown,
     zangetsuSpecialCooldown,
-    zangetsuSpecialMaxCooldown
+    zangetsuSpecialMaxCooldown,
+    mugetsuSpecialCooldown,
+    mugetsuSpecialMaxCooldown
 } from '../weapons/weapon.js';
 
 // UI display for dash cooldown
@@ -150,6 +152,34 @@ function createZangetsuSpecialIndicator() {
     document.body.appendChild(zangetsuSpecialIndicator);
 }
 
+// UI display for Mugetsu special move cooldown
+function createMugetsuSpecialIndicator() {
+    // Create a div element for the Mugetsu special indicator
+    const mugetsuSpecialIndicator = document.createElement('div');
+    mugetsuSpecialIndicator.id = 'mugetsuSpecialIndicator';
+    mugetsuSpecialIndicator.style.position = 'absolute';
+    mugetsuSpecialIndicator.style.bottom = '120px'; // Position above other indicators
+    mugetsuSpecialIndicator.style.left = '20px';
+    mugetsuSpecialIndicator.style.width = '100px';
+    mugetsuSpecialIndicator.style.height = '10px';
+    mugetsuSpecialIndicator.style.backgroundColor = '#333';
+    mugetsuSpecialIndicator.style.border = '2px solid #fff';
+    mugetsuSpecialIndicator.style.borderRadius = '5px';
+    mugetsuSpecialIndicator.style.overflow = 'hidden';
+    
+    // Inner div for the fill level
+    const mugetsuSpecialFill = document.createElement('div');
+    mugetsuSpecialFill.id = 'mugetsuSpecialFill';
+    mugetsuSpecialFill.style.width = '100%';
+    mugetsuSpecialFill.style.height = '100%';
+    mugetsuSpecialFill.style.backgroundColor = '#000'; // Black for Mugetsu
+    mugetsuSpecialFill.style.boxShadow = 'inset 0 0 10px #F00'; // Red glow inside
+    mugetsuSpecialFill.style.transition = 'width 0.1s';
+    
+    mugetsuSpecialIndicator.appendChild(mugetsuSpecialFill);
+    document.body.appendChild(mugetsuSpecialIndicator);
+}
+
 // Update the dash indicator
 function updateDashIndicator() {
     const dashFill = document.getElementById('dashFill');
@@ -221,6 +251,19 @@ function updateZangetsuSpecialIndicator() {
     }
 }
 
+// Update the Mugetsu special indicator
+function updateMugetsuSpecialIndicator() {
+    const mugetsuSpecialFill = document.getElementById('mugetsuSpecialFill');
+    if (mugetsuSpecialFill) {
+        if (mugetsuSpecialCooldown > 0) {
+            const fillPercentage = 100 - (mugetsuSpecialCooldown / mugetsuSpecialMaxCooldown) * 100;
+            mugetsuSpecialFill.style.width = fillPercentage + '%';
+        } else {
+            mugetsuSpecialFill.style.width = '100%';
+        }
+    }
+}
+
 // Export indicator functions
 export {
     createDashIndicator,
@@ -228,9 +271,11 @@ export {
     createSpecialIndicator,
     createWandSpecialIndicator,
     createZangetsuSpecialIndicator,
+    createMugetsuSpecialIndicator,
     updateDashIndicator,
     updateSwordSpecialIndicator,
     updateSpecialIndicator,
     updateWandSpecialIndicator,
-    updateZangetsuSpecialIndicator
+    updateZangetsuSpecialIndicator,
+    updateMugetsuSpecialIndicator
 };
