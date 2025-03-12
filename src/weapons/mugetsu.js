@@ -435,120 +435,162 @@ function createMugetsuAttack(position, direction) {
     // Group for the entire attack effect
     const attackGroup = new THREE.Group();
     
-    // Create a more dramatic slashing wave effect
-    // This shape will be more like a crescent/moon slash
-    const slashShape = new THREE.Shape();
+    // Create the main slash wave - a large curved plane
+    const slashGeometry = new THREE.PlaneGeometry(20, 8, 20, 1);
     
-    // Draw a crescent shape
-    slashShape.moveTo(0, -3);
-    slashShape.bezierCurveTo(2, -2, 4, 0, 4, 3);    // Outer curve
-    slashShape.bezierCurveTo(2, 5, -2, 5, -4, 3);   // Top curve
-    slashShape.bezierCurveTo(-2, 0, -2, -2, 0, -3); // Inner curve
+    // Apply curve to the geometry to make it more wave-like
+    const positions = slashGeometry.attributes.position.array;
+    for (let i = 0; i < positions.length; i += 3) {
+        // Apply curve to z coordinate based on x position
+        const x = positions[i];
+        positions[i + 2] = (x * x) * 0.01;
+    }
+    slashGeometry.computeVertexNormals();
     
-    // Extrude the shape to create a 3D slash
-    const extrudeSettings = {
-        steps: 1,
-        depth: 1,
-        bevelEnabled: true,
-        bevelThickness: 0.2,
-        bevelSize: 0.3,
-        bevelSegments: 3
-    };
-    
-    const slashGeometry = new THREE.ExtrudeGeometry(slashShape, extrudeSettings);
-    const slashMaterial = new THREE.MeshBasicMaterial({
+    const slashMaterial = new THREE.MeshBasicMaterial({ 
         color: 0x000000, // Pure black
         transparent: true,
-        opacity: 0.9
+        opacity: 0.95,
+        side: THREE.DoubleSide
     });
     
     const slash = new THREE.Mesh(slashGeometry, slashMaterial);
     
-    // Scale and position the slash
-    slash.scale.set(1.5, 1.5, 1);
-    slash.position.z = -0.5;
+    // Position the slash to travel forward
+    slash.rotation.x = Math.PI / 2; // Rotate to be vertical
+    slash.position.z = -2; // Position it slightly forward
+    
     attackGroup.add(slash);
     
-    // Create a red glow outline following the slash shape
-    const outlineGeometry = slashGeometry.clone();
-    const outlineMaterial = new THREE.MeshBasicMaterial({
+    // Add leading edge to the slash (thin red line)
+    const edgeGeometry = new THREE.BoxGeometry(20, 0.2, 0.2);
+    const edgeMaterial = new THREE.MeshBasicMaterial({
         color: 0xFF0000, // Red
         transparent: true,
-        opacity: 0.4,
-        wireframe: true
+        opacity: 0.7
     });
     
-    const outline = new THREE.Mesh(outlineGeometry, outlineMaterial);
-    outline.scale.set(1.6, 1.6, 1.1); // Slightly larger than slash
-    outline.position.z = -0.55;
-    attackGroup.add(outline);
+    const edge = new THREE.Mesh(edgeGeometry, edgeMaterial);
+    edge.position.set(0, 0, -2); // Position at the front of slash
+    attackGroup.add(edge);
     
-    // Add a black energy aura effect
-    const auraParticleCount = 150;
-    for (let i = 0; i < auraParticleCount; i++) {
-        // Determine if this is a close or distant particle
-        const isClose = Math.random() > 0.7;
-        const size = isClose ? 0.4 + Math.random() * 0.8 : 0.1 + Math.random() * 0.3;
+    // Add dark energy particles within and behind the slash
+    const particleCount = 200;
+    for (let i = 0; i < particleCount; i++) {
+        // Vary particle size
+        const size = 0.1 + Math.random() * 0.4;
         
-        // Different shapes for variety
+        // Different shapes for the particles
         let geometry;
         const shapeType = Math.floor(Math.random() * 3);
         
         if (shapeType === 0) {
-            geometry = new THREE.BoxGeometry(size, size, size * 0.5);
+            geometry = new THREE.BoxGeometry(size, size * 3, size * 0.2);
         } else if (shapeType === 1) {
-            geometry = new THREE.TetrahedronGeometry(size);
+            geometry = new THREE.PlaneGeometry(size, size * 2);
         } else {
-            geometry = new THREE.OctahedronGeometry(size * 0.7, 0);
+            geometry = new THREE.TetrahedronGeometry(size);
         }
         
-        // Color - mostly black, some red
-        const isRed = Math.random() > 0.85;
+        // Black particles with varying opacity
         const material = new THREE.MeshBasicMaterial({
-            color: isRed ? 0xFF0000 : 0x000000,
+            color: 0x000000,
             transparent: true,
-            opacity: isClose ? 0.8 : 0.4
+            opacity: 0.3 + Math.random() * 0.7,
+            side: THREE.DoubleSide
         });
         
         const particle = new THREE.Mesh(geometry, material);
         
-        // Position around the slash with randomness
-        // Follow crescent shape
-        const t = Math.random(); // Parameter along curve
-        const angle = t * Math.PI; // 0 to π
-        const radius = 3 + Math.random() * 2;
+        // Position particles throughout the slash
+        // Concentrate more particles in the center of the slash
+        const xSpread = (Math.random() - 0.5) * 18;
+        const ySpread = (Math.random() - 0.5) * 7;
+        const zSpread = (Math.random() - 0.5) * 4 - 2; // Mostly behind the leading edge
         
-        // Base position along slash crescent
-        let xBase = Math.cos(angle) * radius * (1 - t * 0.3); // Crescent shape
-        let yBase = Math.sin(angle) * radius;
+        particle.position.set(xSpread, ySpread, zSpread);
         
-        // Add randomness
-        const randomOffset = isClose ? 0.5 : 2;
-        particle.position.set(
-            xBase + (Math.random() - 0.5) * randomOffset,
-            yBase + (Math.random() - 0.5) * randomOffset,
-            (Math.random() - 0.5) * 2 - 1
-        );
-        
-        // Add slight rotation
-        particle.rotation.set(
-            Math.random() * Math.PI * 2,
-            Math.random() * Math.PI * 2,
-            Math.random() * Math.PI * 2
-        );
+        // Random rotation for varied appearance
+        particle.rotation.x = Math.random() * Math.PI * 2;
+        particle.rotation.y = Math.random() * Math.PI * 2;
+        particle.rotation.z = Math.random() * Math.PI * 2;
         
         // Add to attack group
         attackGroup.add(particle);
         
         // Add properties for animation
         particle.userData = {
-            basePosition: particle.position.clone(),
-            speed: 0.01 + Math.random() * 0.03,
-            rotationSpeed: 0.01 + Math.random() * 0.04,
-            pulseRange: 0.05 + Math.random() * 0.3,
-            pulseFrequency: 0.001 + Math.random() * 0.003,
-            phaseOffset: Math.random() * Math.PI * 2,
+            velocity: new THREE.Vector3(
+                (Math.random() - 0.5) * 0.02, // Minimal side movement
+                (Math.random() - 0.5) * 0.02, // Minimal vertical movement
+                (Math.random() - 0.5) * 0.03  // Slight forward/backward movement
+            ),
+            rotationSpeed: Math.random() * 0.01,
             originalOpacity: material.opacity
+        };
+    }
+    
+    // Add trailing darkness effect
+    const trailGeometry = new THREE.PlaneGeometry(18, 30, 1, 20);
+    // Make trail extend backward
+    const trailPositions = trailGeometry.attributes.position.array;
+    for (let i = 0; i < trailPositions.length; i += 3) {
+        // Apply elongation to z coordinate
+        const y = trailPositions[i + 1];
+        if (y < 0) {
+            trailPositions[i + 2] = -y * 0.9; // Stretches out backward based on y position
+        }
+    }
+    trailGeometry.computeVertexNormals();
+    
+    const trailMaterial = new THREE.MeshBasicMaterial({
+        color: 0x000000,
+        transparent: true,
+        opacity: 0.7,
+        side: THREE.DoubleSide
+    });
+    
+    const trail = new THREE.Mesh(trailGeometry, trailMaterial);
+    trail.rotation.x = Math.PI / 2;
+    trail.position.z = 8; // Position behind the slash
+    attackGroup.add(trail);
+    
+    // Add occasional red energy wisps
+    for (let i = 0; i < 15; i++) {
+        const wispGeometry = new THREE.PlaneGeometry(0.2 + Math.random() * 0.5, 1 + Math.random() * 2);
+        const wispMaterial = new THREE.MeshBasicMaterial({
+            color: 0xFF0000,
+            transparent: true,
+            opacity: 0.2 + Math.random() * 0.3,
+            side: THREE.DoubleSide
+        });
+        
+        const wisp = new THREE.Mesh(wispGeometry, wispMaterial);
+        
+        // Position wisps mostly along the edges of the slash
+        const edgeFactor = Math.random() > 0.5 ? 1 : -1;
+        wisp.position.set(
+            (7 + Math.random() * 3) * edgeFactor, // Along the edges
+            (Math.random() - 0.5) * 6,            // Anywhere vertically
+            (Math.random() - 0.5) * 4             // Throughout the slash depth
+        );
+        
+        // Random rotation
+        wisp.rotation.x = Math.random() * Math.PI * 2;
+        wisp.rotation.y = Math.random() * Math.PI * 2;
+        wisp.rotation.z = Math.random() * Math.PI * 2;
+        
+        attackGroup.add(wisp);
+        
+        // Animation properties
+        wisp.userData = {
+            velocity: new THREE.Vector3(
+                (Math.random() - 0.5) * 0.05,
+                (Math.random() - 0.5) * 0.05,
+                0 // Keep in same z-plane as slash
+            ),
+            pulseSpeed: 0.01 + Math.random() * 0.02,
+            originalOpacity: wispMaterial.opacity
         };
     }
     
@@ -564,20 +606,21 @@ function createMugetsuAttack(position, direction) {
     
     // Animation properties
     attackGroup.userData = {
-        velocity: direction.clone().multiplyScalar(0.7), // Fast movement
-        rotationSpeed: 0.01,
+        velocity: direction.clone().multiplyScalar(0.8), // Faster, more direct movement
         lifeTime: 2.0, // seconds
         createTime: Date.now(),
         lastTrailTime: Date.now(),
-        trailInterval: 40, // ms between trail effects
+        trailInterval: 50, // ms between trail effects
         hitObjects: new Set(), // Track hit objects
-        angle: 0 // Initial angle for slash animation
+        age: 0
     };
     
     // Custom update function
     attackGroup.update = function(now) {
         // Check lifetime
         const age = (now - this.userData.createTime) / 1000;
+        this.userData.age = age;
+        
         if (age >= this.userData.lifeTime) {
             return false; // Animation complete
         }
@@ -585,40 +628,103 @@ function createMugetsuAttack(position, direction) {
         // Move forward
         this.position.add(this.userData.velocity);
         
-        // Slightly rotate attack for dramatic effect
-        this.rotation.z += this.userData.rotationSpeed;
+        // Animate the slash wave - make it "slice" through the air
+        const sliceProgress = Math.min(1, age * 2); // Complete in first half of lifetime
         
-        // Animate slash
-        this.userData.angle += 0.03;
-        const slashFactor = Math.sin(this.userData.angle) * 0.2 + 1;
-        this.children[0].scale.set(1.5 * slashFactor, 1.5, 1);
-        this.children[1].scale.set(1.6 * slashFactor, 1.6, 1.1);
+        // Main slash animation
+        if (this.children[0]) {
+            // Expand slightly as it travels
+            const expandFactor = 1.0 + age * 0.3;
+            this.children[0].scale.set(expandFactor, 1.0, 1.0);
+            
+            // Make opacity fade toward the end of life
+            if (age > this.userData.lifeTime * 0.7) {
+                const fadeProgress = (age - this.userData.lifeTime * 0.7) / (this.userData.lifeTime * 0.3);
+                this.children[0].material.opacity = 0.95 * (1 - fadeProgress);
+            }
+        }
         
-        // Animate particles
-        for (let i = 2; i < this.children.length; i++) {
+        // Leading edge animation
+        if (this.children[1]) {
+            // Pulse the leading edge
+            const pulseFactor = (Math.sin(now * 0.01) + 1) * 0.5;
+            this.children[1].scale.set(1.0, 1.0 + pulseFactor, 1.0 + pulseFactor);
+            this.children[1].material.opacity = 0.5 + pulseFactor * 0.5;
+        }
+        
+        // Trail animation
+        if (this.children[this.children.length - 1 - 15]) { // The trail (accounting for wisps)
+            // Stretch the trail as it moves
+            const trail = this.children[this.children.length - 1 - 15];
+            const stretchFactor = 1.0 + age * 1.5;
+            trail.scale.set(1.0, stretchFactor, 1.0);
+            
+            // Make trail fade toward the end of life
+            if (age > this.userData.lifeTime * 0.5) {
+                const fadeProgress = (age - this.userData.lifeTime * 0.5) / (this.userData.lifeTime * 0.5);
+                trail.material.opacity = 0.7 * (1 - fadeProgress);
+            }
+        }
+        
+        // Update particles
+        for (let i = 2; i < this.children.length - 15; i++) { // Skip slash and edge, and wisps
             const particle = this.children[i];
             
             // Skip particles without userData
-            if (!particle.userData || !particle.userData.basePosition) continue;
+            if (!particle.userData) continue;
             
-            // Calculate pulsing motion
-            const pulse = Math.sin(now * particle.userData.pulseFrequency + particle.userData.phaseOffset);
-            
-            // Apply pulsing motion to position
-            particle.position.x = particle.userData.basePosition.x + pulse * particle.userData.pulseRange;
-            particle.position.y = particle.userData.basePosition.y + pulse * particle.userData.pulseRange;
+            // Move particle according to velocity
+            if (particle.userData.velocity) {
+                particle.position.add(particle.userData.velocity);
+            }
             
             // Rotate particles
-            particle.rotation.x += particle.userData.rotationSpeed;
-            particle.rotation.y += particle.userData.rotationSpeed * 0.7;
-            particle.rotation.z += particle.userData.rotationSpeed * 0.4;
+            if (particle.userData.rotationSpeed) {
+                particle.rotation.x += particle.userData.rotationSpeed;
+                particle.rotation.y += particle.userData.rotationSpeed;
+                particle.rotation.z += particle.userData.rotationSpeed;
+            }
             
-            // Pulse opacity
-            particle.material.opacity = particle.userData.originalOpacity * 
-                (0.7 + Math.sin(now * 0.002 + i) * 0.3);
+            // Fade particles over time
+            if (age > this.userData.lifeTime * 0.5) {
+                const fadeProgress = (age - this.userData.lifeTime * 0.5) / (this.userData.lifeTime * 0.5);
+                particle.material.opacity = particle.userData.originalOpacity * (1 - fadeProgress);
+            }
         }
         
-        // Create trail effect
+        // Update wisps
+        for (let i = this.children.length - 15; i < this.children.length; i++) {
+            const wisp = this.children[i];
+            
+            // Skip without userData
+            if (!wisp.userData) continue;
+            
+            // Move wisp with velocity
+            if (wisp.userData.velocity) {
+                wisp.position.add(wisp.userData.velocity);
+            }
+            
+            // Pulse effect
+            if (wisp.userData.pulseSpeed) {
+                const pulse = Math.sin(now * wisp.userData.pulseSpeed) * 0.5 + 0.5;
+                wisp.material.opacity = wisp.userData.originalOpacity * pulse;
+                
+                // Also scale slightly with pulse
+                wisp.scale.set(
+                    1.0 + pulse * 0.2,
+                    1.0 + pulse * 0.2,
+                    1.0
+                );
+            }
+            
+            // Fade wisps over time
+            if (age > this.userData.lifeTime * 0.6) {
+                const fadeProgress = (age - this.userData.lifeTime * 0.6) / (this.userData.lifeTime * 0.4);
+                wisp.material.opacity = wisp.userData.originalOpacity * (1 - fadeProgress);
+            }
+        }
+        
+        // Create trail effect occasionally
         if (now - this.userData.lastTrailTime > this.userData.trailInterval) {
             this.userData.lastTrailTime = now;
             createMugetsuTrail(this.position.clone(), this.quaternion.clone());

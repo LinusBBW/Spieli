@@ -1,4 +1,4 @@
-// Main animation loop and game state updates
+// src/core/animation.js - Fixed to resolve weaponBench reference error
 
 import { scene, camera, renderer } from './scene.js';
 import { 
@@ -26,6 +26,8 @@ import { updateCubes } from '../entities/enemies.js';
 import { updateParticles } from '../effects/particles.js';
 import { createDashEffect } from '../effects/particles.js';
 import { animateMugetsu, animateDarkAura } from '../weapons/mugetsu.js';
+// Import weapon bench check function and getBench
+import { checkPlayerNearBench, getWeaponBench } from '../entities/weaponbench.js';
 
 // Store animation frame ID for potential cancellation
 let animationFrameId;
@@ -87,6 +89,15 @@ function animate(time) {
     
     // Update health system
     updateHealthSystem();
+    
+    // Check if player is near weapon bench
+    checkPlayerNearBench(camera.position);
+    
+    // Get the weapon bench reference and update if it exists
+    const bench = getWeaponBench();
+    if (bench && typeof bench.update === 'function') {
+        bench.update(time);
+    }
     
     // Safely animate Mugetsu and Dark Aura
     if (window.mugetsu) {

@@ -1,19 +1,13 @@
-// Main entry point for the game
+// main.js - Modified to include weapon bench
 
-// Import core modules
+// Import original modules
 import { initScene, scene, camera, renderer } from './src/core/scene.js';
 import { initControls, controls } from './src/core/controls.js';
 import { startAnimationLoop } from './src/core/animation.js';
-
-// Import entity modules
 import { createPlayer } from './src/entities/player.js';
 import { createEnvironment } from './src/entities/environment.js';
 import { setupCubes } from './src/entities/enemies.js';
-
-// Import weapon modules
 import { initWeapons } from './src/weapons/weapon.js';
-
-// Import UI modules
 import { createHealthSystem } from './src/ui/health.js';
 import { 
     createDashIndicator, 
@@ -24,12 +18,10 @@ import {
     createMugetsuSpecialIndicator
 } from './src/ui/indicators.js';
 import { createCrosshair } from './src/ui/crosshair.js';
+import { createMugetsu, createDarkAura } from './src/weapons/mugetsu.js';
 
-// Import weapon modules
-import { 
-    createMugetsu, 
-    createDarkAura 
-} from './src/weapons/mugetsu.js';  // Add this import
+// Import new modules for weapon bench
+import { createWeaponBench } from './src/entities/weaponbench.js';
 
 // Initialize the game
 function initGame() {
@@ -41,6 +33,9 @@ function initGame() {
     
     // Create environment (floor, walls)
     const { floor, walls } = createEnvironment();
+    
+    // Create weapon bench
+    const weaponBench = createWeaponBench();
     
     // Create player and setup weapons
     const player = createPlayer(camera, controls);

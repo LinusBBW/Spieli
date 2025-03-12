@@ -81,7 +81,6 @@ let isMugetsuSpecialActive = false;
 let mugetsuSpecialCooldown = 0;
 let mugetsuSpecialMaxCooldown = 300; // 5 seconds at 60 FPS
 
-// Set up event listeners for weapon actions
 function setupWeaponEventListeners(controls) {
     // Right-click for swinging
     document.addEventListener('contextmenu', (event) => {
@@ -97,20 +96,22 @@ function setupWeaponEventListeners(controls) {
         }
     });
     
-    // Keyboard controls for weapons
+    // Keyboard controls for weapons - removed Q key for cycling
     document.addEventListener("keydown", (event) => {
         switch (event.code) {
             case 'KeyE':
                 swingWeapon();
                 break;
-            case 'KeyQ':
-                cycleWeapon();
-                break;
             case 'KeyF':
                 activateSpecialMove(controls);
                 break;
         }
-    }); 
+    });
+}
+
+// Add a getter for the active weapon
+function getActiveWeapon() {
+    return activeWeapon;
 }
 
 // Initialize weapons
@@ -140,58 +141,54 @@ function initWeapons(camera, controls) {
 }
 
 // Cycle through weapons
-function cycleWeapon() {
-    if (activeWeapon === "sword") {
-        activeWeapon = "katana";
-        sword.visible = false;
-        katana.visible = true;
-        wand.visible = false;
-        zangetsu.visible = false;
-        tensaZangetsu.visible = false;
-        mugetsu.visible = false;
-        darkAura.visible = false;
-        console.log("Katana selected");
-    } else if (activeWeapon === "katana") {
-        activeWeapon = "wand";
-        sword.visible = false;
-        katana.visible = false;
-        wand.visible = true;
-        zangetsu.visible = false;
-        tensaZangetsu.visible = false;
-        mugetsu.visible = false;
-        darkAura.visible = false;
-        console.log("Wand selected");
-    } else if (activeWeapon === "wand") {
-        activeWeapon = "zangetsu";
-        sword.visible = false;
-        katana.visible = false;
-        wand.visible = false;
-        zangetsu.visible = true;
-        tensaZangetsu.visible = true;
-        mugetsu.visible = false;
-        darkAura.visible = false;
-        console.log("Zangetsu and Tensa Zangetsu selected");
-    } else if (activeWeapon === "zangetsu") {
-        activeWeapon = "mugetsu";
-        sword.visible = false;
-        katana.visible = false;
-        wand.visible = false;
-        zangetsu.visible = false;
-        tensaZangetsu.visible = false;
-        mugetsu.visible = true;
-        darkAura.visible = false;
-        console.log("Mugetsu selected");
-    } else {
-        activeWeapon = "sword";
-        sword.visible = true;
-        katana.visible = false;
-        wand.visible = false;
-        zangetsu.visible = false;
-        tensaZangetsu.visible = false;
-        mugetsu.visible = false;
-        darkAura.visible = false;
-        console.log("Sword selected");
+// With this new function:
+function selectWeapon(weaponId) {
+    if (!isValidWeapon(weaponId)) {
+        console.error(`Invalid weapon ID: ${weaponId}`);
+        return;
     }
+    
+    // Hide all weapons first
+    sword.visible = false;
+    katana.visible = false;
+    wand.visible = false;
+    zangetsu.visible = false;
+    tensaZangetsu.visible = false;
+    mugetsu.visible = false;
+    darkAura.visible = false;
+    
+    // Set the active weapon
+    activeWeapon = weaponId;
+    
+    // Show the selected weapon
+    switch(weaponId) {
+        case "sword":
+            sword.visible = true;
+            console.log("Sword selected");
+            break;
+        case "katana":
+            katana.visible = true;
+            console.log("Katana selected");
+            break;
+        case "wand":
+            wand.visible = true;
+            console.log("Wand selected");
+            break;
+        case "zangetsu":
+            zangetsu.visible = true;
+            tensaZangetsu.visible = true;
+            console.log("Zangetsu and Tensa Zangetsu selected");
+            break;
+        case "mugetsu":
+            mugetsu.visible = true;
+            console.log("Mugetsu selected");
+            break;
+    }
+}
+
+// Helper function to validate weapon ID
+function isValidWeapon(weaponId) {
+    return ["sword", "katana", "wand", "zangetsu", "mugetsu"].includes(weaponId);
 }
 
 // Get the currently active weapon object
@@ -733,8 +730,7 @@ function updateWeaponSpecials(controls) {
     }
 }
 
-// Export weapon system
-export {
+export { 
     initWeapons,
     updateWeaponAnimations,
     updateWeaponSpecials,
@@ -757,5 +753,8 @@ export {
     isZangetsuSpecialActive,
     isMugetsuSpecialActive,
     mugetsuSpecialCooldown,
-    mugetsuSpecialMaxCooldown
+    mugetsuSpecialMaxCooldown,
+    // Add these two new exports:
+    selectWeapon,
+    getActiveWeapon
 };
