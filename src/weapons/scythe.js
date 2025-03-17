@@ -856,20 +856,15 @@ function createRiftEnergyParticle(scythe) {
     return particle;
 }
 
-// Start the Dimensional Rift special
-function startDimensionalRiftSpecial(controls) {
-    // Disable controls initially
+// Start the Dimensional Rift special - FIXED using callback approach
+function startDimensionalRiftSpecial(controls, onSpecialActivated) {
+    // Disable controls immediately
     controls.enabled = false;
     
     // Show the rift cutscene
     showRiftCutScene(() => {
-        // Start the actual special move
-        isPerformingSpecial = true;
-        specialProgress = 0;
-        isDimensionalRiftActive = true;
-        
-        // Save original camera rotation
-        originalCameraRotation = camera.rotation.y;
+        // Call the callback function from weapon.js to handle variable updates
+        if (onSpecialActivated) onSpecialActivated();
         
         // Re-enable controls after a short delay
         setTimeout(() => {

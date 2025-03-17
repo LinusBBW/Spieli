@@ -27,6 +27,12 @@ import {
     animateMugetsu,
     animateDarkAura
 } from './mugetsu.js';
+import { 
+    createScythe,
+    animateScythe,
+    updateDimensionalRiftAnimation,
+    startDimensionalRiftSpecial
+} from './scythe.js';
 import { cubes } from '../entities/enemies.js';
 import { createDestroyEffect, activeFragments } from '../effects/particles.js';
 import { createMagicEffect } from '../effects/particles.js';
@@ -36,13 +42,13 @@ import { showJuJishoCutScene } from './ju-jisho-cutscene.js';
 import { showMugetsuCutScene } from './mugetsu-cutscene.js';
 
 // Weapon state variables
-let activeWeapon = "sword"; // "sword", "katana", "wand", "zangetsu", or "mugetsu"
+let activeWeapon = "sword"; // "sword", "katana", "wand", "zangetsu", "mugetsu", or "scythe"
 let isSwinging = false;
 let swingProgress = 0;
 let canDestroy = false;
 
 // References to weapon objects
-let sword, katana, wand, zangetsu, tensaZangetsu, mugetsu, darkAura;
+let sword, katana, wand, zangetsu, tensaZangetsu, mugetsu, darkAura, scythe;
 
 // Original rotation for the sword (used for animations)
 let originalSwordRotation = {
@@ -80,6 +86,11 @@ let zangetsuSpecialMaxCooldown = 180; // 3 seconds at 60 FPS
 let isMugetsuSpecialActive = false;
 let mugetsuSpecialCooldown = 0;
 let mugetsuSpecialMaxCooldown = 300; // 5 seconds at 60 FPS
+
+// Special move variables - Scythe
+let isDimensionalRiftActive = false;
+let scytheSpecialCooldown = 0;
+let scytheSpecialMaxCooldown = 240; // 4 seconds at 60 FPS
 
 function setupWeaponEventListeners(controls) {
     // Right-click for swinging
@@ -124,6 +135,7 @@ function initWeapons(camera, controls) {
     tensaZangetsu = createTensaZangetsu(camera);
     mugetsu = createMugetsu(camera);
     darkAura = createDarkAura(camera);
+    scythe = createScythe(camera);
     
     // Show initial weapon
     sword.visible = true;
@@ -133,6 +145,7 @@ function initWeapons(camera, controls) {
     tensaZangetsu.visible = false;
     mugetsu.visible = false;
     darkAura.visible = false;
+    scythe.visible = false;
     
     // Set up event listeners
     setupWeaponEventListeners(controls);
@@ -140,7 +153,6 @@ function initWeapons(camera, controls) {
     console.log("Weapons initialized successfully!");
 }
 
-// Cycle through weapons
 // With this new function:
 function selectWeapon(weaponId) {
     if (!isValidWeapon(weaponId)) {
@@ -156,6 +168,7 @@ function selectWeapon(weaponId) {
     tensaZangetsu.visible = false;
     mugetsu.visible = false;
     darkAura.visible = false;
+    scythe.visible = false;
     
     // Set the active weapon
     activeWeapon = weaponId;
@@ -183,12 +196,16 @@ function selectWeapon(weaponId) {
             mugetsu.visible = true;
             console.log("Mugetsu selected");
             break;
+        case "scythe":
+            scythe.visible = true;
+            console.log("Scythe selected");
+            break;
     }
 }
 
 // Helper function to validate weapon ID
 function isValidWeapon(weaponId) {
-    return ["sword", "katana", "wand", "zangetsu", "mugetsu"].includes(weaponId);
+    return ["sword", "katana", "wand", "zangetsu", "mugetsu", "scythe"].includes(weaponId);
 }
 
 // Get the currently active weapon object
@@ -201,6 +218,8 @@ function getActiveWeaponObject() {
         return wand;
     } else if (activeWeapon === "zangetsu") {
         return zangetsu;
+    } else if (activeWeapon === "scythe") {
+        return scythe;
     } else {
         return mugetsu;
     }
@@ -223,6 +242,17 @@ function activateSpecialMove(controls) {
     } else if (activeWeapon === "mugetsu" && !isPerformingSpecial && mugetsuSpecialCooldown <= 0) {
         startMugetsuSpecial(controls);
         console.log("Mugetsu special move activated");
+    } else if (activeWeapon === "scythe" && !isPerformingSpecial && scytheSpecialCooldown <= 0) {
+        // Use the callback pattern to update variables
+        startDimensionalRiftSpecial(controls, () => {
+            isPerformingSpecial = true;
+            specialProgress = 0;
+            isDimensionalRiftActive = true;
+            
+            // Save original camera rotation
+            originalCameraRotation = camera.rotation.y;
+        });
+        console.log("Scythe dimensional rift activated");
     }
 }
 
@@ -408,6 +438,9 @@ function updateWeaponAnimations() {
             if (darkAura && darkAura.visible) {
                 animateDarkAura(darkAura, 1/60);
             }
+        } else if (activeWeapon === "scythe") {
+            // Scythe hovers with mystical energy
+            animateScythe(scythe, 1/60);
         }
         
         canDestroy = false; // Can't destroy when not swinging
@@ -554,6 +587,9 @@ function updateWeaponAnimations() {
             } else if (activeWeapon === "mugetsu") {
                 mugetsu.rotation.x = originalSwordRotation.x;
                 mugetsu.rotation.z = originalSwordRotation.z;
+            } else if (activeWeapon === "scythe") {
+                scythe.rotation.x = originalSwordRotation.x;
+                scythe.rotation.z = originalSwordRotation.z;
             } else {
                 // Reset wand
                 wand.rotation.y = Math.PI / 10;
@@ -622,6 +658,10 @@ function updateWeaponSpecials(controls) {
         mugetsuSpecialCooldown--;
     }
     
+    if (scytheSpecialCooldown > 0) {
+        scytheSpecialCooldown--;
+    }
+    
     // Special move animations based on active weapon
     if (isPerformingSpecial) {
         // Update the special progress
@@ -641,6 +681,11 @@ function updateWeaponSpecials(controls) {
                 const cameraDirection = new THREE.Vector3();
                 camera.getWorldDirection(cameraDirection);
                 updateMugetsuAnimation(specialProgress, mugetsu, darkAura, controls, camera.position.clone(), cameraDirection);
+            } else if (isDimensionalRiftActive) {
+                // Dimensional Rift animation
+                const cameraDirection = new THREE.Vector3();
+                camera.getWorldDirection(cameraDirection);
+                updateDimensionalRiftAnimation(specialProgress, scythe, controls, camera.position.clone(), cameraDirection);
             } else {
                 // Katana Bankai animation - Senbonzakura Kageyoshi
                 updateBankaiAnimation(specialProgress, katana, controls, originalCameraRotation, camera.position.clone());
@@ -696,6 +741,15 @@ function updateWeaponSpecials(controls) {
                 
                 // Hide dark aura
                 darkAura.visible = false;
+            } else if (isDimensionalRiftActive) {
+                scytheSpecialCooldown = scytheSpecialMaxCooldown;
+                isDimensionalRiftActive = false;
+                
+                // Reset scythe
+                scythe.position.set(0.4, -0.3, -0.6);
+                scythe.rotation.x = Math.PI / 6;
+                scythe.rotation.z = -Math.PI / 8;
+                scythe.userData.riftEnergy = 0;
             } else {
                 specialCooldown = specialMaxCooldown;
                 
@@ -754,6 +808,10 @@ export {
     isMugetsuSpecialActive,
     mugetsuSpecialCooldown,
     mugetsuSpecialMaxCooldown,
+    scytheSpecialCooldown,
+    scytheSpecialMaxCooldown,
+    isDimensionalRiftActive,
+    originalCameraRotation,
     // Add these two new exports:
     selectWeapon,
     getActiveWeapon

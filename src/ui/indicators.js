@@ -14,7 +14,9 @@ import {
     zangetsuSpecialCooldown,
     zangetsuSpecialMaxCooldown,
     mugetsuSpecialCooldown,
-    mugetsuSpecialMaxCooldown
+    mugetsuSpecialMaxCooldown,
+    scytheSpecialCooldown,
+    scytheSpecialMaxCooldown
 } from '../weapons/weapon.js';
 
 // UI display for dash cooldown
@@ -180,6 +182,33 @@ function createMugetsuSpecialIndicator() {
     document.body.appendChild(mugetsuSpecialIndicator);
 }
 
+// UI display for Scythe special move cooldown
+function createScytheSpecialIndicator() {
+    // Create a div element for the scythe special indicator
+    const scytheSpecialIndicator = document.createElement('div');
+    scytheSpecialIndicator.id = 'scytheSpecialIndicator';
+    scytheSpecialIndicator.style.position = 'absolute';
+    scytheSpecialIndicator.style.bottom = '140px';
+    scytheSpecialIndicator.style.left = '20px';
+    scytheSpecialIndicator.style.width = '100px';
+    scytheSpecialIndicator.style.height = '10px';
+    scytheSpecialIndicator.style.backgroundColor = '#333';
+    scytheSpecialIndicator.style.border = '2px solid #fff';
+    scytheSpecialIndicator.style.borderRadius = '5px';
+    scytheSpecialIndicator.style.overflow = 'hidden';
+    
+    // Inner div for the fill level
+    const scytheSpecialFill = document.createElement('div');
+    scytheSpecialFill.id = 'scytheSpecialFill';
+    scytheSpecialFill.style.width = '100%';
+    scytheSpecialFill.style.height = '100%';
+    scytheSpecialFill.style.backgroundColor = '#8A2BE2'; // Purple for Dimensional Rift
+    scytheSpecialFill.style.transition = 'width 0.1s';
+    
+    scytheSpecialIndicator.appendChild(scytheSpecialFill);
+    document.body.appendChild(scytheSpecialIndicator);
+}
+
 // Update the dash indicator
 function updateDashIndicator() {
     const dashFill = document.getElementById('dashFill');
@@ -264,6 +293,19 @@ function updateMugetsuSpecialIndicator() {
     }
 }
 
+// Update the Scythe special indicator
+function updateScytheSpecialIndicator() {
+    const scytheSpecialFill = document.getElementById('scytheSpecialFill');
+    if (scytheSpecialFill) {
+        if (scytheSpecialCooldown > 0) {
+            const fillPercentage = 100 - (scytheSpecialCooldown / scytheSpecialMaxCooldown) * 100;
+            scytheSpecialFill.style.width = fillPercentage + '%';
+        } else {
+            scytheSpecialFill.style.width = '100%';
+        }
+    }
+}
+
 // Export indicator functions
 export {
     createDashIndicator,
@@ -272,10 +314,12 @@ export {
     createWandSpecialIndicator,
     createZangetsuSpecialIndicator,
     createMugetsuSpecialIndicator,
+    createScytheSpecialIndicator,
     updateDashIndicator,
     updateSwordSpecialIndicator,
     updateSpecialIndicator,
     updateWandSpecialIndicator,
     updateZangetsuSpecialIndicator,
-    updateMugetsuSpecialIndicator
+    updateMugetsuSpecialIndicator,
+    updateScytheSpecialIndicator
 };

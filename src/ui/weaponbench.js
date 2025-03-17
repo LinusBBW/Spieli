@@ -62,7 +62,8 @@ function createWeaponBenchUI() {
         { id: 'katana', name: 'Katana', description: 'Swift slashes with Bankai special ability.' },
         { id: 'wand', name: 'Magic Wand', description: 'Ranged attacks with arcane energy.' },
         { id: 'zangetsu', name: 'Zangetsu', description: 'Powerful slashes with Getsuga Jūjishō.' },
-        { id: 'mugetsu', name: 'Mugetsu', description: 'The Final Getsuga Tenshō form.' }
+        { id: 'mugetsu', name: 'Mugetsu', description: 'The Final Getsuga Tenshō form.' },
+        { id: 'scythe', name: 'Dimensional Scythe', description: 'Massive scythe that can tear open reality itself.' }
     ];
     
     // Create button for each weapon
@@ -145,6 +146,9 @@ function createWeaponButton(weapon) {
         case 'mugetsu':
             icon.style.backgroundColor = '#000000'; // Black with red border
             icon.style.border = '2px solid #FF0000';
+            break;
+        case 'scythe':
+            icon.style.backgroundColor = '#8A2BE2'; // Purple (for Dimensional Rift)
             break;
         default:
             icon.style.backgroundColor = '#FFFFFF';

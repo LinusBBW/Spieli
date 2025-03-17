@@ -15,7 +15,8 @@ import {
     createWandSpecialIndicator,
     createSwordSpecialIndicator,
     createZangetsuSpecialIndicator,
-    createMugetsuSpecialIndicator
+    createMugetsuSpecialIndicator,
+    createScytheSpecialIndicator
 } from './src/ui/indicators.js';
 import { createCrosshair } from './src/ui/crosshair.js';
 import { createMugetsu, createDarkAura } from './src/weapons/mugetsu.js';
@@ -60,6 +61,7 @@ function initGame() {
     createWandSpecialIndicator();
     createZangetsuSpecialIndicator();
     createMugetsuSpecialIndicator();
+    createScytheSpecialIndicator();
     
     // Add renderer to the DOM
     document.body.appendChild(renderer.domElement);
