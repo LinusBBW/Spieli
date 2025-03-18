@@ -1,8 +1,11 @@
 // Enhanced collision detection system
 import { scene, camera, raycaster } from '../core/scene.js';
 import { createDestroyEffect } from '../effects/particles.js';
-import { enemies, damageEnemy, findIntersectedEnemy, isPointInHitbox } from '../entities/enemies.js';
-import { playerCurrentHealth, takeDamage } from '../ui/health.js';
+import { scene, camera, raycaster } from '../core/scene.js';
+import { createDestroyEffect } from '../effects/particles.js';
+import { cubes } from '../entities/enemies.js';
+// import { enemies, damageEnemy, findIntersectedEnemy, isPointInHitbox } from '../entities/enemies.js';
+import { playerCurrentHealth, takeDamage } from '../ui/health.js';import { playerCurrentHealth, takeDamage } from '../ui/health.js';
 
 // Collision detection settings
 const COLLISION_SETTINGS = {
@@ -86,7 +89,67 @@ function togglePlayerHitbox() {
     playerHitboxMesh.visible = !playerHitboxMesh.visible;
     console.log(`Player hitbox ${playerHitboxMesh.visible ? 'visible' : 'hidden'}`);
 }
+// Add this function below (to replace the imported damageEnemy function)
+function damageEnemy(enemy, damage) {
+    // Remove the cube from the scene
+    scene.remove(enemy);
+    
+    // Remove the cube from the list of cubes
+    const index = cubes.indexOf(enemy);
+    if (index > -1) {
+        cubes.splice(index, 1);
+    }
+    
+    // Create a destruction effect at the position of the hit enemy
+    createDestroyEffect(enemy.position, enemy.material.color);
+    
+    return true; // Enemy was destroyed
+}
 
+// Replacement functions for the ones we're not importing
+function findIntersectedEnemy(ray) {
+    // Return null if no cubes
+    if (cubes.length === 0) return { enemy: null, distance: Infinity };
+    
+    // Find the nearest cube hit by the ray
+    let nearestCube = null;
+    let nearestDistance = Infinity;
+    
+    for (const cube of cubes) {
+        // Create a bounding box for the cube
+        const bbox = new THREE.Box3().setFromObject(cube);
+        
+        // Check if ray intersects the bounding box
+        const intersection = ray.intersectBox(bbox, new THREE.Vector3());
+        
+        if (intersection) {
+            // Calculate distance to intersection
+            const distance = ray.origin.distanceTo(intersection);
+            
+            // Keep track of the nearest intersection
+            if (distance < nearestDistance) {
+                nearestDistance = distance;
+                nearestCube = cube;
+            }
+        }
+    }
+    
+    return {
+        enemy: nearestCube,
+        distance: nearestDistance,
+        point: nearestCube ? ray.origin.clone().add(ray.direction.clone().multiplyScalar(nearestDistance)) : null
+    };
+}
+
+function isPointInHitbox(point, enemy) {
+    if (!enemy) return false;
+    
+    // Create a bounding box for the enemy
+    const bbox = new THREE.Box3().setFromObject(enemy);
+    
+    // Check if the point is inside the bounding box
+    return bbox.containsPoint(point);
+}
 // Update player hitbox position based on camera
 function updatePlayerHitbox(playerPosition) {
     // Update the bounding box

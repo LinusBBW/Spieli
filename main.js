@@ -1,4 +1,4 @@
-// main.js - Modified to include weapon bench
+// main.js - Updated to include the boss
 
 // Import original modules
 import { initScene, scene, camera, renderer } from './src/core/scene.js';
@@ -21,9 +21,14 @@ import {
 import { createCrosshair } from './src/ui/crosshair.js';
 import { createMugetsu, createDarkAura } from './src/weapons/mugetsu.js';
 
-// Import new modules for weapon bench
+// Import weapon bench
 import { createWeaponBench } from './src/entities/weaponbench.js';
 
+// Import boss - NEW
+import { createBoss } from './src/entities/boss.js';
+
+// And in your initGame function, add:
+const boss = createBoss(new THREE.Vector3(0, 0, -15));
 // Initialize the game
 function initGame() {
     // Setup the scene, renderer, and camera
@@ -52,6 +57,16 @@ function initGame() {
     // Create enemy cubes
     const cubes = setupCubes();
     
+    // Create the boss
+    const boss = createBoss(new THREE.Vector3(0, 0, -15));
+    // Lock pointer on click
+    document.addEventListener("click", () => {
+        controls.lock();
+    });
+    // Use the original animation loop
+    startAnimationLoop();
+
+
     // Create UI elements
     createCrosshair(camera);
     createHealthSystem();
@@ -66,8 +81,8 @@ function initGame() {
     // Add renderer to the DOM
     document.body.appendChild(renderer.domElement);
     
-    // Start the animation loop
-    startAnimationLoop();
+    // Start the animation loop - using the updated function
+    window.startAnimationLoop();
     
     // Lock pointer on click
     document.addEventListener("click", () => {

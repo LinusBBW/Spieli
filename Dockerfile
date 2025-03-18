@@ -7,7 +7,7 @@ COPY package*.json ./
 RUN npm install
 # Rest kopieren
 COPY . .
-# Vite verwendet standardmäßig Port 5173, diesen freigeben
+# Vite verwendet standardmässig Port 5173, diesen freigeben
 EXPOSE 5173
 # Starte Vite-Server. Das "--host" sorgt dafür dass der Server auf allen interfaces zuhört
 CMD ["npx", "vite", "--host"]

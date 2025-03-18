@@ -1,4 +1,4 @@
-// src/core/animation.js - Fixed to resolve weaponBench reference error
+// src/core/animation.js - Updated to include boss updates
 
 import { scene, camera, renderer } from './scene.js';
 import { 
@@ -29,6 +29,8 @@ import { createDashEffect } from '../effects/particles.js';
 import { animateMugetsu, animateDarkAura } from '../weapons/mugetsu.js';
 // Import weapon bench check function and getBench
 import { checkPlayerNearBench, getWeaponBench } from '../entities/weaponbench.js';
+// Import boss update function - NEW
+import { getBoss } from '../entities/boss.js';
 
 // Store animation frame ID for potential cancellation
 let animationFrameId;
@@ -100,7 +102,17 @@ function animate(time) {
     if (bench && typeof bench.update === 'function') {
         bench.update(time);
     }
+
+    function updateBoss(time) {
+        const boss = getBoss();
+        if (boss && typeof boss.update === 'function') {
+            boss.update(time);
+        }
+    }
+    // Update boss - NEW
+    updateBoss(time);
     
+
     // Safely animate Mugetsu and Dark Aura
     if (window.mugetsu) {
         animateMugetsu(window.mugetsu, deltaTime);
@@ -130,4 +142,4 @@ function stopAnimationLoop() {
 }
 
 // Export animation functions
-export { startAnimationLoop, stopAnimationLoop };
+export { startAnimationLoop, stopAnimationLoop, animate };
